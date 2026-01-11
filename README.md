@@ -1,36 +1,40 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# WorkspacePro
 
-## Getting Started
+WorkspacePro is a powerful, modern business operations platform designed for contractors and small business owners to manage projects, inventory, and finances in one place.
 
-First, run the development server:
+## Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+### 🚀 Dashboard & Onboarding
+- **Interactive Overview**: Real-time statistics on projects, inventory, and finances.
+- **Smart Onboarding**: A stateless guide to help new users set up their workspace.
+- **Micro-interactions**: Smooth transitions and skeleton loading states for a premium feel.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 📋 Project Management
+- **Centralized Tracking**: Manage multiple projects with ease.
+- **Activity Feed**: Real-time updates on project changes and member actions.
+- **Resource Allocation**: Link inventory directly to projects.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 📦 Inventory Management
+- **Visual Tracking**: Cloudinary integration for item images.
+- **Stock Alerts**: Automatic low-stock notifications.
+- **SKU Management**: Organize items by SKU and categories.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 💰 Finance & Invoicing
+- **Professional Invoices**: professional A4 previews and PDF exports.
+- **Email Integration**: Send invoices directly via **Resend**.
+- **Revenue Analytics**: Monthly revenue charts and payment tracking with **Recharts**.
 
-## Learn More
+## Tech Stack
+- **Framework**: Next.js 14 (App Router)
+- **Language**: TypeScript
+- **Database**: PostgreSQL (Prisma ORM)
+- **Auth**: NextAuth.js v5
+- **Styling**: Tailwind CSS + Shadcn/ui
+- **Uploads**: Cloudinary
+- **Emails**: Resend
+- **Charts**: Recharts
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Architecture
+- **Server Actions**: All business logic handled via secure Next.js Server Actions.
+- **Zod Validation**: End-to-end type safety and validation.
+- **Multi-tenancy**: Workspace-based data isolation.

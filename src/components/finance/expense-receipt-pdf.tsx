@@ -1,0 +1,166 @@
+import { Document, Page, Text, View, StyleSheet, Image, Font } from '@react-pdf/renderer';
+import { format } from 'date-fns';
+
+// Register fonts
+Font.register({
+    family: 'Inter',
+    fonts: [
+        { src: 'https://cdn.jsdelivr.net/npm/inter-font@3.19.0/ttf/Inter-Regular.ttf' },
+        { src: 'https://cdn.jsdelivr.net/npm/inter-font@3.19.0/ttf/Inter-Bold.ttf', fontWeight: 'bold' },
+    ]
+});
+
+const styles = StyleSheet.create({
+    page: {
+        padding: 40,
+        fontFamily: 'Inter',
+        fontSize: 10,
+        color: '#18181b', // Zinc-900
+    },
+    header: {
+        marginBottom: 30,
+        borderBottom: '1px solid #e4e4e7', // Zinc-200
+        paddingBottom: 20,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    title: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        textTransform: 'uppercase',
+        letterSpacing: 2,
+        color: '#047857', // Emerald-700
+    },
+    workspaceInfo: {
+        textAlign: 'right',
+    },
+    workspaceName: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        marginBottom: 4,
+    },
+    label: {
+        color: '#71717a', // Zinc-500
+        fontSize: 9,
+        marginBottom: 4,
+        textTransform: 'uppercase',
+    },
+    value: {
+        fontSize: 11,
+        marginBottom: 12,
+    },
+    section: {
+        marginBottom: 20,
+    },
+    grid: {
+        flexDirection: 'row',
+        gap: 40,
+        marginBottom: 30,
+    },
+    amountCard: {
+        backgroundColor: '#f4f4f5', // Zinc-100
+        padding: 15,
+        borderRadius: 4,
+        alignItems: 'center',
+        marginTop: 20,
+    },
+    amountLabel: {
+        fontSize: 10,
+        color: '#52525b', // Zinc-600
+        marginBottom: 5,
+        textTransform: 'uppercase',
+    },
+    amountValue: {
+        fontSize: 28,
+        fontWeight: 'bold',
+        color: '#047857', // Emerald-700
+    },
+    footer: {
+        position: 'absolute',
+        bottom: 30,
+        left: 40,
+        right: 40,
+        textAlign: 'center',
+        color: '#a1a1aa', // Zinc-400
+        fontSize: 8,
+        borderTop: '1px solid #f4f4f5',
+        paddingTop: 10,
+    },
+});
+
+interface ExpenseReceiptProps {
+    expense: {
+        id: string;
+        title: string;
+        category: string;
+        amount: number;
+        date: Date;
+    };
+    workspace: {
+        name: string;
+        address?: string | null;
+        logo?: string | null;
+        currency?: string;
+    };
+}
+
+export const ExpenseReceiptPDF = ({ expense, workspace }: ExpenseReceiptProps) => {
+    const formattedAmount = new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: workspace.currency || 'USD',
+    }).format(Number(expense.amount));
+
+    return (
+        <Document>
+            <Page size="A4" style={styles.page}>
+                {/* Header */}
+                <View style={styles.header}>
+                    <View>
+                        <Text style={styles.title}>Expense Receipt</Text>
+                        <Text style={styles.label}>Receipt #{expense.id.slice(-8).toUpperCase()}</Text>
+                    </View>
+                    <View style={styles.workspaceInfo}>
+                        <Text style={styles.workspaceName}>{workspace.name}</Text>
+                        {workspace.address && <Text>{workspace.address}</Text>}
+                        <Text>{format(new Date(), 'MMM d, yyyy')}</Text>
+                    </View>
+                </View>
+
+                {/* Details Grid */}
+                <View style={styles.grid}>
+                    <View style={{ flex: 1 }}>
+                        <Text style={styles.label}>Description</Text>
+                        <Text style={styles.value}>{expense.title}</Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                        <Text style={styles.label}>Category</Text>
+                        <Text style={styles.value}>{expense.category}</Text>
+                    </View>
+                </View>
+
+                <View style={styles.grid}>
+                    <View style={{ flex: 1 }}>
+                        <Text style={styles.label}>Date Incurred</Text>
+                        <Text style={styles.value}>{format(new Date(expense.date), 'MMMM d, yyyy')}</Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                        {/* Space for additional info like Reference ID if added later */}
+                    </View>
+                </View>
+
+                {/* Amount */}
+                <View style={styles.amountCard}>
+                    <Text style={styles.amountLabel}>Total Amount</Text>
+                    <Text style={styles.amountValue}>{formattedAmount}</Text>
+                </View>
+
+                {/* Footer */}
+                <View style={styles.footer}>
+                    <Text>Generated by Workspace Pro for {workspace.name}</Text>
+                    <Text>This is a computer-generated receipt.</Text>
+                </View>
+            </Page>
+        </Document>
+    );
+};
