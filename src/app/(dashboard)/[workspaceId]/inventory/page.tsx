@@ -1,6 +1,7 @@
 import prisma from "@/lib/db";
 import { CreateInventoryModal } from "@/components/inventory/create-inventory-modal";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import {
     Plus,
     Package,
@@ -121,22 +122,28 @@ const InventoryPage = async ({ params }: { params: Promise<{ workspaceId: string
                         {items.map((item) => (
                             <TableRow key={item.id} className="group">
                                 <TableCell>
-                                    <div className="relative h-10 w-10 rounded-md overflow-hidden bg-zinc-100 border text-zinc-500">
-                                        {item.image ? (
-                                            <Image
-                                                src={item.image}
-                                                alt={item.name}
-                                                fill
-                                                className="object-cover"
-                                            />
-                                        ) : (
-                                            <div className="h-full w-full flex items-center justify-center">
-                                                <Layers className="h-5 w-5 text-zinc-400" />
-                                            </div>
-                                        )}
-                                    </div>
+                                    <Link href={`/${workspaceId}/inventory/${item.id}`}>
+                                        <div className="relative h-10 w-10 rounded-md overflow-hidden bg-zinc-100 border text-zinc-500 hover:opacity-80 transition-opacity">
+                                            {item.image ? (
+                                                <Image
+                                                    src={item.image}
+                                                    alt={item.name}
+                                                    fill
+                                                    className="object-cover"
+                                                />
+                                            ) : (
+                                                <div className="h-full w-full flex items-center justify-center">
+                                                    <Layers className="h-5 w-5 text-zinc-400" />
+                                                </div>
+                                            )}
+                                        </div>
+                                    </Link>
                                 </TableCell>
-                                <TableCell className="font-medium">{item.name}</TableCell>
+                                <TableCell className="font-medium">
+                                    <Link href={`/${workspaceId}/inventory/${item.id}`} className="hover:underline">
+                                        {item.name}
+                                    </Link>
+                                </TableCell>
                                 <TableCell className="text-zinc-500 uppercase text-xs">{item.sku || "N/A"}</TableCell>
                                 <TableCell>
                                     <Badge variant="outline" className="text-[10px] font-normal">
@@ -153,11 +160,18 @@ const InventoryPage = async ({ params }: { params: Promise<{ workspaceId: string
                                 </TableCell>
                                 <TableCell>${Number(item.unitCost).toFixed(2)}</TableCell>
                                 <TableCell className="text-right">
-                                    <InventoryActions
-                                        workspaceId={workspaceId}
-                                        item={serializeDecimal(item)}
-                                        projects={projects}
-                                    />
+                                    <div className="flex justify-end items-center gap-2">
+                                        <Button variant="ghost" size="icon" asChild>
+                                            <Link href={`/${workspaceId}/inventory/${item.id}`}>
+                                                <Layers className="h-4 w-4" />
+                                            </Link>
+                                        </Button>
+                                        <InventoryActions
+                                            workspaceId={workspaceId}
+                                            item={serializeDecimal(item)}
+                                            projects={projects}
+                                        />
+                                    </div>
                                 </TableCell>
                             </TableRow>
                         ))}

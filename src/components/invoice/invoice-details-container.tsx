@@ -18,8 +18,7 @@ export const InvoiceDetailsContainer = ({ workspace, invoice, workspaceId }: Inv
     const printRef = useRef<HTMLDivElement>(null);
 
     const handlePrint = useReactToPrint({
-        // @ts-expect-error - The types might be slightly off due to version mismatch but the functionality is usually fine
-        content: () => printRef.current,
+        contentRef: printRef,
         documentTitle: `Invoice-${invoice.id}`,
     });
 

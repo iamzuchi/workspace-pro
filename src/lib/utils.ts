@@ -17,11 +17,12 @@ export function serializeDecimal(obj: any): any {
     return obj.map(serializeDecimal);
   }
 
-  // Check if it's a Prisma Decimal object (Decimal, Decimal2, etc) or any Decimal.js instance
-  // We check for 'd', 's', 'e' properties which are common in Decimal.js implementations
+  // Check if it's a Prisma Decimal object or Decimal.js instance
+  // Prisma decimals usually have d, e, s properties
   if (
     (obj.constructor && (obj.constructor.name === 'Decimal' || obj.constructor.name === 'Decimal2')) ||
-    (typeof obj.toNumber === 'function' && obj.d !== undefined && obj.s !== undefined)
+    (obj.d && obj.e && obj.s) ||
+    (typeof obj.toNumber === 'function')
   ) {
     return Number(obj.toString());
   }

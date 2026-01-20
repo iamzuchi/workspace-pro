@@ -169,6 +169,14 @@ interface InvoicePDFProps {
     invoice: any;
 }
 
+const formatCurrency = (amount: number | string, currency = 'USD') => {
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: currency,
+        minimumFractionDigits: 2
+    }).format(Number(amount));
+};
+
 export const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoice }) => {
     // Determine Bill To Name
     const billToName = invoice.recipientName
@@ -178,6 +186,8 @@ export const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoice }) => {
     const billToEmail = invoice.recipientEmail
         ? invoice.recipientEmail
         : (invoice.contractor ? invoice.contractor.email : "");
+
+    const currency = invoice.currency || 'USD';
 
     return (
         <Document>
@@ -232,8 +242,8 @@ export const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoice }) => {
                         <View key={i} style={styles.tableRow}>
                             <Text style={[styles.td, styles.description]}>{item.description}</Text>
                             <Text style={[styles.td, styles.qty]}>{item.quantity}</Text>
-                            <Text style={[styles.td, styles.price]}>${Number(item.unitPrice).toFixed(2)}</Text>
-                            <Text style={[styles.td, styles.amount]}>${Number(item.amount).toFixed(2)}</Text>
+                            <Text style={[styles.td, styles.price]}>{formatCurrency(item.unitPrice, currency)}</Text>
+                            <Text style={[styles.td, styles.amount]}>{formatCurrency(item.amount, currency)}</Text>
                         </View>
                     ))}
                 </View>
@@ -242,15 +252,15 @@ export const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoice }) => {
                 <View style={styles.totals}>
                     <View style={styles.totalRow}>
                         <Text style={styles.totalLabel}>Subtotal</Text>
-                        <Text style={styles.totalValue}>${Number(invoice.totalAmount).toFixed(2)}</Text>
+                        <Text style={styles.totalValue}>{formatCurrency(invoice.totalAmount, currency)}</Text>
                     </View>
                     <View style={styles.totalRow}>
                         <Text style={styles.totalLabel}>Tax</Text>
-                        <Text style={styles.totalValue}>${Number(invoice.taxAmount).toFixed(2)}</Text>
+                        <Text style={styles.totalValue}>{formatCurrency(invoice.taxAmount, currency)}</Text>
                     </View>
                     <View style={[styles.totalRow, styles.grandTotal]}>
                         <Text style={styles.totalLabel}>Total</Text>
-                        <Text style={styles.totalValue}>${(Number(invoice.totalAmount) + Number(invoice.taxAmount)).toFixed(2)}</Text>
+                        <Text style={styles.totalValue}>{formatCurrency((Number(invoice.totalAmount) + Number(invoice.taxAmount)), currency)}</Text>
                     </View>
                 </View>
 
