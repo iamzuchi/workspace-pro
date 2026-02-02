@@ -2,7 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { inviteMemberByEmail } from "@/actions/invitation";
-import { Role } from "@prisma/client";
+// Removed direct import of Role from @prisma/client to avoid client-side build errors
+// import { Role } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -16,7 +17,8 @@ interface InviteMemberFormProps {
 
 export const InviteMemberForm = ({ workspaceId }: InviteMemberFormProps) => {
     const [email, setEmail] = useState("");
-    const [role, setRole] = useState<Role>(Role.TEAM_MEMBER);
+    // Defaulting to "TEAM_MEMBER" string instead of enum to avoid import
+    const [role, setRole] = useState("TEAM_MEMBER");
     const [isPending, startTransition] = useTransition();
     const [inviteLink, setInviteLink] = useState<string | null>(null);
     const [copied, setCopied] = useState(false);
