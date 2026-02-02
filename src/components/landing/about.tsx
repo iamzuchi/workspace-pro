@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Image from "next/image";
 
 export const About = () => {
     return (
@@ -43,14 +44,14 @@ export const About = () => {
                         className="relative space-y-6"
                     >
                         <div className="rounded-2xl overflow-hidden shadow-2xl border border-zinc-100 transform rotate-1 hover:rotate-0 transition-transform duration-500">
-                            <img
+                            <Image
                                 src="/feature-tasks.png"
                                 alt="Task Management"
                                 className="w-full h-auto"
                             />
                         </div>
                         <div className="rounded-2xl overflow-hidden shadow-2xl border border-zinc-100 transform -rotate-1 hover:rotate-0 transition-transform duration-500 max-w-[80%] ml-auto">
-                            <img
+                            <Image
                                 src="/feature-finance.png"
                                 alt="Finance Tracking"
                                 className="w-full h-auto"

@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
+import Image from "next/image";
 
 export const Hero = () => {
     return (
@@ -59,9 +60,9 @@ export const Hero = () => {
                         transition={{ duration: 0.7, delay: 0.2 }}
                         className="relative lg:h-auto flex items-center justify-center"
                     >
-                        <div className="absolute inset-0 bg-gradient-to-tr from-zinc-100 to-transparent rounded-3xl -rotate-2" />
+                        <div className="absolute inset-0 bg-linear-to-tr from-zinc-100 to-transparent rounded-3xl -rotate-2" />
                         <div className="relative w-full rounded-3xl shadow-2xl overflow-hidden border border-zinc-100">
-                            <img
+                            <Image
                                 src="/hero-dashboard.png"
                                 alt="WorkspacePro Dashboard"
                                 className="w-full h-auto object-cover"

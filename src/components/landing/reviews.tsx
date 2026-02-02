@@ -50,7 +50,7 @@ export const Reviews = () => {
                             transition={{ delay: index * 0.1 }}
                             className="p-8 rounded-3xl bg-zinc-50 border border-zinc-100 flex flex-col relative overflow-hidden"
                         >
-                            <Quote className="absolute top-4 right-4 h-12 w-12 text-zinc-100 -z-0" />
+                            <Quote className="absolute top-4 right-4 h-12 w-12 text-zinc-100 z-0" />
                             <div className="flex gap-1 mb-4">
                                 {[1, 2, 3, 4, 5].map((s) => (
                                     <Star key={s} className="h-4 w-4 fill-zinc-900 text-zinc-900" />

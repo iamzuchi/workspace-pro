@@ -38,8 +38,8 @@ export default auth(async (req) => {
     // 2. Auth Logic (Existing)
     const isLoggedIn = !!req.auth
     const isApiAuthRoute = req.nextUrl.pathname.startsWith("/api/auth")
-    const isPublicRoute = ["/", "/auth/login", "/auth/register"].includes(req.nextUrl.pathname)
-    const isAuthRoute = req.nextUrl.pathname.startsWith("/auth")
+    const isPublicRoute = ["/", "/login", "/register"].includes(req.nextUrl.pathname)
+    const isAuthRoute = ["/login", "/register"].includes(req.nextUrl.pathname)
 
     if (isApiAuthRoute) {
         return
@@ -59,7 +59,7 @@ export default auth(async (req) => {
         }
 
         const encodedCallbackUrl = encodeURIComponent(callbackUrl);
-        return Response.redirect(new URL(`/auth/login?callbackUrl=${encodedCallbackUrl}`, req.nextUrl))
+        return Response.redirect(new URL(`/login?callbackUrl=${encodedCallbackUrl}`, req.nextUrl))
     }
 
     return
