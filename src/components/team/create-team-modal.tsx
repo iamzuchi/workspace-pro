@@ -159,9 +159,9 @@ export const CreateTeamModal = ({
                                     size="sm"
                                     onClick={() => append({ name: "", contact: "", occupation: "", address: "" })}
                                     disabled={isPending}
-                                    className="border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                                    className="border-emerald-200 text-emerald-700 hover:bg-emerald-50 text-base h-10 px-4"
                                 >
-                                    <Plus className="h-4 w-4 mr-2" /> Add Member
+                                    <Plus className="h-5 w-5 mr-2" /> Add Member
                                 </Button>
                             </div>
 
@@ -247,7 +247,7 @@ export const CreateTeamModal = ({
                             <Button type="button" variant="ghost" onClick={onClose} disabled={isPending}>
                                 Cancel
                             </Button>
-                            <Button type="submit" disabled={isPending} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold">
+                            <Button type="submit" disabled={isPending} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-lg h-12 px-8">
                                 {isPending ? "Registering..." : "Register Team"}
                             </Button>
                         </DialogFooter>

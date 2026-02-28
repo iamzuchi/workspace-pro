@@ -100,7 +100,7 @@ export const InvoicePreview = ({ workspace, invoice }: InvoicePreviewProps) => {
             </div>
 
             {/* Items Table */}
-            <div className="flex-grow">
+            <div className="grow">
                 <Table>
                     <TableHeader>
                         <TableRow className="bg-zinc-50 hover:bg-zinc-50">
@@ -142,8 +142,56 @@ export const InvoicePreview = ({ workspace, invoice }: InvoicePreviewProps) => {
                         <span className="text-lg font-bold text-zinc-900">Total</span>
                         <span className="text-xl font-black text-zinc-900">{currencyFormatter.format(Number(invoice.totalAmount))}</span>
                     </div>
+
+                    {invoice.payments && invoice.payments.length > 0 && (
+                        <>
+                            <div className="flex justify-between text-emerald-600 font-medium">
+                                <span>Amount Paid</span>
+                                <span>- {currencyFormatter.format(invoice.payments.reduce((acc: number, p: any) => acc + Number(p.amount), 0))}</span>
+                            </div>
+                            <div className="flex justify-between pt-3 border-t-2 border-double border-zinc-900">
+                                <span className="text-lg font-bold text-zinc-900">Balance Due</span>
+                                <span className="text-xl font-black text-rose-600">
+                                    {currencyFormatter.format(Math.max(0, Number(invoice.totalAmount) - invoice.payments.reduce((acc: number, p: any) => acc + Number(p.amount), 0)))}
+                                </span>
+                            </div>
+                        </>
+                    )}
                 </div>
             </div>
+
+            {/* Payment History */}
+            {invoice.payments && invoice.payments.length > 0 && (
+                <div className="mt-12">
+                    <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-3">Payment History</h3>
+                    <div className="border rounded-md overflow-hidden">
+                        <Table>
+                            <TableHeader>
+                                <TableRow className="bg-zinc-50 hover:bg-zinc-50">
+                                    <TableHead className="text-xs">Date</TableHead>
+                                    <TableHead className="text-xs">Method</TableHead>
+                                    <TableHead className="text-xs">Reference</TableHead>
+                                    <TableHead className="text-right text-xs">Amount</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {invoice.payments.map((payment: any) => (
+                                    <TableRow key={payment.id} className="text-sm">
+                                        <TableCell className="py-2 text-zinc-600">
+                                            {format(new Date(payment.date), "MMM d, yyyy")}
+                                        </TableCell>
+                                        <TableCell className="py-2 text-zinc-600">{payment.method}</TableCell>
+                                        <TableCell className="py-2 text-zinc-400 font-mono text-[10px]">{payment.reference || "-"}</TableCell>
+                                        <TableCell className="py-2 text-right font-medium">
+                                            {currencyFormatter.format(Number(payment.amount))}
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
+                </div>
+            )}
 
             {/* Notes */}
             {invoice.notes && (

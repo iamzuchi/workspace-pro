@@ -6,4 +6,5 @@ export const CreateExpenseSchema = z.object({
     amount: z.coerce.number().positive("Amount must be positive"),
     date: z.date(),
     receiptUrl: z.string().optional(),
+    projectId: z.string().optional(),
 });

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CheckSquare, GanttChart, Users, Calendar as CalendarIcon } from "lucide-react";
+import { CheckSquare, GanttChart, Users, Calendar as CalendarIcon, MessageSquare } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ProjectTasksTable } from "./project-tasks-table";
@@ -21,6 +21,8 @@ import { format } from "date-fns";
 import Link from "next/link";
 import { ProjectTeamSection } from "@/components/project/project-team-section";
 import { ProjectBudgetCard } from "./project-budget-card";
+import { EditAllocationModal } from "./edit-allocation-modal";
+import { CreateExpenseModal } from "@/components/finance/create-expense-modal";
 
 interface ProjectTabsProps {
     workspaceId: string;
@@ -33,7 +35,8 @@ interface ProjectTabsProps {
     tasks: any[];
     members: any[];
     contractors: any[];
-    totalPaid: number;
+    totalExpenses: number;
+    currentUserId: string;
 }
 
 export const ProjectTabs = ({
@@ -47,9 +50,12 @@ export const ProjectTabs = ({
     tasks,
     members,
     contractors,
-    totalPaid
+    totalExpenses,
+    currentUserId
 }: ProjectTabsProps) => {
     const [activeTab, setActiveTab] = useState("overview");
+    const [editingAllocation, setEditingAllocation] = useState<any | null>(null);
+    const [showEditAllocationModal, setShowEditAllocationModal] = useState(false);
 
     const getFileIcon = (type: string | null) => {
         if (!type) return <FileIcon className="h-5 w-5" />;
@@ -80,11 +86,19 @@ export const ProjectTabs = ({
                     <Users className="h-4 w-4" />
                     Team
                 </TabsTrigger>
-                <TabsTrigger value="comments">Comments</TabsTrigger>
+                <TabsTrigger value="comments" className="gap-2">
+                    <MessageSquare className="h-4 w-4" />
+                    Comments
+                    {comments.length > 0 && (
+                        <Badge variant="secondary" className="h-5 px-1.5 min-w-[20px] justify-center ml-0.5">
+                            {comments.length}
+                        </Badge>
+                    )}
+                </TabsTrigger>
                 <TabsTrigger value="activity">Activity</TabsTrigger>
                 <TabsTrigger value="documents">Documents</TabsTrigger>
                 <TabsTrigger value="inventory">Inventory</TabsTrigger>
-                <TabsTrigger value="invoices">Invoices</TabsTrigger>
+                <TabsTrigger value="expenses">Expenses</TabsTrigger>
             </TabsList>
 
             <TabsContent value="overview" className="space-y-4">
@@ -124,7 +138,7 @@ export const ProjectTabs = ({
                     <div className="lg:col-span-1">
                         <ProjectBudgetCard
                             budget={Number(project.budget || 0)}
-                            totalPaid={totalPaid}
+                            totalExpenses={totalExpenses}
                             currency={project.workspace.currency || "USD"}
                         />
                     </div>
@@ -141,6 +155,8 @@ export const ProjectTabs = ({
                                 projectId={projectId}
                                 tasks={tasks.slice(0, 5)}
                                 members={members.map((m: any) => m.user)}
+                                projectTeams={project.teams as any}
+                                currentUserId={currentUserId}
                             />
                             <div className="mt-4 flex justify-center">
                                 <Button variant="ghost" size="sm" onClick={() => setActiveTab("tasks")}>
@@ -165,7 +181,7 @@ export const ProjectTabs = ({
                     <h3 className="text-lg font-semibold">Project Tasks</h3>
                     <CreateTaskModal workspaceId={workspaceId} projectId={projectId} members={members.map((m: any) => m.user)} />
                 </div>
-                <ProjectTasksTable workspaceId={workspaceId} projectId={projectId} tasks={tasks} members={members.map((m: any) => m.user)} />
+                <ProjectTasksTable workspaceId={workspaceId} projectId={projectId} tasks={tasks} members={members.map((m: any) => m.user)} projectTeams={project.teams as any} currentUserId={currentUserId} />
             </TabsContent>
 
             <TabsContent value="tracker" className="space-y-4">
@@ -261,12 +277,13 @@ export const ProjectTabs = ({
                                 <th className="text-left py-3 px-4 font-semibold text-zinc-600">Item Name</th>
                                 <th className="text-center py-3 px-4 font-semibold text-zinc-600">Quantity</th>
                                 <th className="text-right py-3 px-4 font-semibold text-zinc-600">Allocated At</th>
+                                <th className="text-right py-3 px-4 font-semibold text-zinc-600">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y">
                             {project.allocations.length === 0 && (
                                 <tr>
-                                    <td colSpan={3} className="py-8 text-center text-zinc-500 italic">
+                                    <td colSpan={4} className="py-8 text-center text-zinc-500 italic">
                                         No inventory items allocated to this project yet.
                                     </td>
                                 </tr>
@@ -285,66 +302,64 @@ export const ProjectTabs = ({
                                     <td className="py-3 px-4 text-right text-zinc-400">
                                         {format(new Date(allocation.allocatedAt), "MMM d, yyyy")}
                                     </td>
+                                    <td className="py-3 px-4 text-right">
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => {
+                                                setEditingAllocation(allocation);
+                                                setShowEditAllocationModal(true);
+                                            }}
+                                        >
+                                            Edit
+                                        </Button>
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
                 </div>
+                <EditAllocationModal
+                    workspaceId={workspaceId}
+                    projectId={projectId}
+                    allocation={editingAllocation}
+                    open={showEditAllocationModal}
+                    onOpenChange={setShowEditAllocationModal}
+                />
             </TabsContent>
 
-            <TabsContent value="invoices" className="space-y-4">
+            <TabsContent value="expenses" className="space-y-4">
                 <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold">Project Invoices</h3>
-                    <Button size="sm" asChild>
-                        <Link href={`/${workspaceId}/invoices/create?projectId=${projectId}`}>
-                            <PlusCircle className="mr-2 h-4 w-4" />
-                            Create Invoice
-                        </Link>
-                    </Button>
+                    <h3 className="text-lg font-semibold">Project Expenses</h3>
+                    <CreateExpenseModal projectId={projectId} />
                 </div>
                 <div className="rounded-xl border bg-card shadow overflow-hidden">
                     <table className="w-full text-sm">
                         <thead className="bg-zinc-50 border-b">
                             <tr>
-                                <th className="text-left py-3 px-4 font-semibold text-zinc-600">Invoice #</th>
-                                <th className="text-left py-3 px-4 font-semibold text-zinc-600">Status</th>
-                                <th className="text-right py-3 px-4 font-semibold text-zinc-600">Total</th>
-                                <th className="text-right py-3 px-4 font-semibold text-zinc-600">Due Date</th>
-                                <th className="py-3 px-4"></th>
+                                <th className="text-left py-3 px-4 font-semibold text-zinc-600">Date</th>
+                                <th className="text-left py-3 px-4 font-semibold text-zinc-600">Title</th>
+                                <th className="text-left py-3 px-4 font-semibold text-zinc-600">Category</th>
+                                <th className="text-right py-3 px-4 font-semibold text-zinc-600">Amount</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y">
-                            {project.invoices.length === 0 && (
+                            {(!project.expenses || project.expenses.length === 0) && (
                                 <tr>
-                                    <td colSpan={5} className="py-8 text-center text-zinc-500 italic">
-                                        No invoices associated with this project.
+                                    <td colSpan={4} className="py-8 text-center text-zinc-500 italic">
+                                        No expenses recorded for this project.
                                     </td>
                                 </tr>
                             )}
-                            {project.invoices.map((invoice: any) => (
-                                <tr key={invoice.id} className="hover:bg-zinc-50 transition">
-                                    <td className="py-3 px-4 font-medium">{invoice.number}</td>
+                            {project.expenses?.map((expense: any) => (
+                                <tr key={expense.id} className="hover:bg-zinc-50 transition">
+                                    <td className="py-3 px-4">{format(new Date(expense.date), "MMM d, yyyy")}</td>
+                                    <td className="py-3 px-4 font-medium">{expense.title}</td>
                                     <td className="py-3 px-4">
-                                        <Badge variant={
-                                            invoice.status === "PAID" ? "default" :
-                                                invoice.status === "OVERDUE" ? "destructive" :
-                                                    "secondary"
-                                        }>
-                                            {invoice.status}
-                                        </Badge>
+                                        <Badge variant="secondary">{expense.category}</Badge>
                                     </td>
-                                    <td className="py-3 px-4 text-right font-bold">
-                                        {formatCurrency(Number(invoice.totalAmount), project.workspace.currency || "USD")}
-                                    </td>
-                                    <td className="py-3 px-4 text-right text-zinc-400">
-                                        {invoice.dueDate ? format(new Date(invoice.dueDate), "MMM d, yyyy") : "N/A"}
-                                    </td>
-                                    <td className="py-3 px-4 text-right">
-                                        <Button variant="ghost" size="sm" asChild>
-                                            <Link href={`/${workspaceId}/invoices/${invoice.id}`}>
-                                                <ExternalLink className="h-4 w-4" />
-                                            </Link>
-                                        </Button>
+                                    <td className="py-3 px-4 text-right font-bold text-rose-600">
+                                        -{formatCurrency(Number(expense.amount), project.workspace.currency || "USD")}
                                     </td>
                                 </tr>
                             ))}

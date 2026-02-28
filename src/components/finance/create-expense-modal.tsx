@@ -57,7 +57,7 @@ const EXPENSE_CATEGORIES = [
     "Other",
 ];
 
-export const CreateExpenseModal = () => {
+export const CreateExpenseModal = ({ projectId }: { projectId?: string }) => {
     const [open, setOpen] = useState(false);
     const [isPending, startTransition] = useTransition();
     const params = useParams();
@@ -71,6 +71,7 @@ export const CreateExpenseModal = () => {
             category: "",
             amount: 0,
             date: new Date(),
+            projectId: projectId || undefined,
         },
     });
 
@@ -92,8 +93,8 @@ export const CreateExpenseModal = () => {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button>
-                    <Plus className="mr-2 h-4 w-4" /> Add Expense
+                <Button className="text-base h-11 px-6">
+                    <Plus className="mr-2 h-5 w-5" /> Add Expense
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
@@ -208,8 +209,8 @@ export const CreateExpenseModal = () => {
                             )}
                         />
 
-                        <Button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700" disabled={isPending}>
-                            {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        <Button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700 text-lg h-12" disabled={isPending}>
+                            {isPending && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
                             Create Expense
                         </Button>
                     </form>

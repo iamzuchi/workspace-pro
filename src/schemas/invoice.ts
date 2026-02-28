@@ -20,3 +20,9 @@ export const CreateInvoiceSchema = z.object({
     currency: z.string().default("USD"),
 });
 
+export const RecordPaymentSchema = z.object({
+    amount: z.coerce.number().min(0.01, "Amount must be at least 0.01"),
+    date: z.date().default(new Date()),
+    method: z.string().min(1, "Payment method is required"),
+    reference: z.string().optional(),
+});

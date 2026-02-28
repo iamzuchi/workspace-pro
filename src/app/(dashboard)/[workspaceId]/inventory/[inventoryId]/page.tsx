@@ -126,15 +126,25 @@ const InventoryDetailsPage = async ({
                                         </TableCell>
                                     </TableRow>
                                 )}
-                                {item.allocations.map((allocation) => (
+                                {item.allocations.map((allocation: any) => (
                                     <TableRow key={allocation.id}>
                                         <TableCell className="font-medium">
-                                            <Link href={`/${workspaceId}/projects/${allocation.projectId}`} className="hover:underline">
-                                                {allocation.project.name}
-                                            </Link>
+                                            {allocation.project ? (
+                                                <Link href={`/${workspaceId}/projects/${allocation.projectId}`} className="hover:underline">
+                                                    {allocation.project.name}
+                                                </Link>
+                                            ) : (
+                                                <div className="flex flex-col">
+                                                    <Badge variant="outline" className="w-fit mb-1 border-emerald-200 bg-emerald-50 text-emerald-700">External</Badge>
+                                                    <span className="text-zinc-900">{allocation.recipient || "Unknown Recipient"}</span>
+                                                    {allocation.notes && (
+                                                        <span className="text-[10px] text-zinc-500 italic mt-0.5">{allocation.notes}</span>
+                                                    )}
+                                                </div>
+                                            )}
                                         </TableCell>
-                                        <TableCell>{format(new Date(allocation.allocatedAt), "MMM dd, yyyy")}</TableCell>
-                                        <TableCell>{allocation.quantity}</TableCell>
+                                        <TableCell className="text-zinc-500">{format(new Date(allocation.allocatedAt), "MMM dd, yyyy")}</TableCell>
+                                        <TableCell className="font-semibold">{allocation.quantity}</TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>

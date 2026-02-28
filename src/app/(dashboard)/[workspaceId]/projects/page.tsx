@@ -34,8 +34,8 @@ const ProjectsPage = async ({ params }: { params: Promise<{ workspaceId: string 
                 <h2 className="text-3xl font-bold tracking-tight">Projects Tracker</h2>
                 <div className="flex items-center space-x-2">
                     <CreateProjectModal>
-                        <Button>
-                            <Plus className="mr-2 h-4 w-4" /> New Project
+                        <Button className="text-base h-11 px-6">
+                            <Plus className="mr-2 h-5 w-5" /> New Project
                         </Button>
                     </CreateProjectModal>
                 </div>

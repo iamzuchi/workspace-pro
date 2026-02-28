@@ -9,3 +9,9 @@ export const CreateInventoryItemSchema = z.object({
     lowStockThreshold: z.coerce.number().min(0).optional(),
     image: z.string().optional(),
 });
+export const AllocateInventorySchema = z.object({
+    projectId: z.string().optional(),
+    recipient: z.string().optional(),
+    notes: z.string().optional(),
+    quantity: z.coerce.number().min(1, "Quantity must be at least 1"),
+});

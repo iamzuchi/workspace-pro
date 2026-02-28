@@ -187,7 +187,7 @@ export const CreateProjectModal = ({ children }: { children: React.ReactNode }) 
                         </div>
                         <div className="flex items-center justify-end w-full pt-4 space-x-2">
                             <Button disabled={isPending} variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-                            <Button disabled={isPending} type="submit">Create</Button>
+                            <Button disabled={isPending} type="submit" className="text-base h-11 px-6">Create</Button>
                         </div>
                     </form>
                 </Form>

@@ -12,9 +12,12 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { login } from "@/actions/login";
 import { toast } from "sonner";
+import Link from "next/link";
+import { Eye, EyeOff } from "lucide-react";
 
 export const LoginForm = () => {
     const [isPending, startTransition] = useTransition();
+    const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState<string | undefined>("");
     const [success, setSuccess] = useState<string | undefined>("");
 
@@ -67,8 +70,32 @@ export const LoginForm = () => {
                             <FormItem>
                                 <FormLabel>Password</FormLabel>
                                 <FormControl>
-                                    <Input {...field} disabled={isPending} placeholder="******" type="password" />
+                                    <div className="relative">
+                                        <Input
+                                            {...field}
+                                            disabled={isPending}
+                                            placeholder="******"
+                                            type={showPassword ? "text" : "password"}
+                                        />
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                                            onClick={() => setShowPassword((prev) => !prev)}
+                                            disabled={isPending}
+                                        >
+                                            {showPassword ? (
+                                                <EyeOff className="h-4 w-4 text-muted-foreground" />
+                                            ) : (
+                                                <Eye className="h-4 w-4 text-muted-foreground" />
+                                            )}
+                                        </Button>
+                                    </div>
                                 </FormControl>
+                                <Button size="sm" variant="link" asChild className="px-0 font-normal">
+                                    <Link href="/reset">Forgot password?</Link>
+                                </Button>
                                 <FormMessage />
                             </FormItem>
                         )} />

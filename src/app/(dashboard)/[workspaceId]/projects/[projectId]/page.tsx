@@ -38,9 +38,9 @@ const ProjectDetailsPage = async ({
                     item: true
                 }
             },
-            invoices: {
+            expenses: {
                 orderBy: {
-                    createdAt: "desc"
+                    date: "desc"
                 }
             },
             teams: {
@@ -61,7 +61,7 @@ const ProjectDetailsPage = async ({
         where: { workspaceId }
     });
 
-    const totalPaid = project.payments.reduce((acc, p) => acc + Number(p.amount), 0);
+    const totalExpenses = project.expenses.reduce((acc, e) => acc + Number(e.amount), 0);
 
     const [comments, activities, documents, tasks, members, contractors] = await Promise.all([
         getComments(projectId),
@@ -135,7 +135,8 @@ const ProjectDetailsPage = async ({
                 tasks={tasks}
                 members={members}
                 contractors={plainContractors}
-                totalPaid={totalPaid}
+                totalExpenses={totalExpenses}
+                currentUserId={user.id as string}
             />
         </div>
     );

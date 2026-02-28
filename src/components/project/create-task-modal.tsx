@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Plus } from "lucide-react";
 import { TaskStatus, TaskPriority } from "@prisma/client";
+import { Checkbox } from "@/components/ui/checkbox";
 
 import {
     Dialog,
@@ -42,18 +43,22 @@ const TaskSchema = z.object({
     priority: z.nativeEnum(TaskPriority),
     dueDate: z.string().optional(),
     assignedUserId: z.string().optional(),
+    teamMemberId: z.string().optional(),
+    isPaid: z.boolean(),
 });
 
 interface CreateTaskModalProps {
     workspaceId: string;
     projectId: string;
     members: { id: string; name: string | null; image?: string | null }[];
+    projectTeams?: { id: string; name: string; members: { id: string; name: string }[] }[];
 }
 
 export const CreateTaskModal = ({
     workspaceId,
     projectId,
     members,
+    projectTeams = [],
 }: CreateTaskModalProps) => {
     const [open, setOpen] = useState(false);
     const [isPending, startTransition] = useTransition();
@@ -66,7 +71,9 @@ export const CreateTaskModal = ({
             status: "TODO",
             priority: "MEDIUM",
             dueDate: "",
-            assignedUserId: "",
+            assignedUserId: "none",
+            teamMemberId: "none",
+            isPaid: false,
         },
     });
 
@@ -75,7 +82,8 @@ export const CreateTaskModal = ({
             createTask(workspaceId, projectId, {
                 ...values,
                 dueDate: values.dueDate ? new Date(values.dueDate) : undefined,
-                assignedUserId: values.assignedUserId || undefined,
+                assignedUserId: values.assignedUserId && values.assignedUserId !== "none" ? values.assignedUserId : undefined,
+                teamMemberId: values.teamMemberId && values.teamMemberId !== "none" ? values.teamMemberId : undefined,
             }).then((data) => {
                 if (data.error) toast.error(data.error);
                 if (data.success) {
@@ -90,8 +98,8 @@ export const CreateTaskModal = ({
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button size="sm">
-                    <Plus className="mr-2 h-4 w-4" />
+                <Button className="text-base h-11 px-6">
+                    <Plus className="mr-2 h-5 w-5" />
                     Add Task
                 </Button>
             </DialogTrigger>
@@ -188,6 +196,7 @@ export const CreateTaskModal = ({
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
+                                            <SelectItem value="none">None</SelectItem>
                                             {members.map((member) => (
                                                 <SelectItem key={member.id} value={member.id}>
                                                     {member.name || "Unnamed User"}
@@ -199,16 +208,71 @@ export const CreateTaskModal = ({
                                 </FormItem>
                             )}
                         />
+                        <div className="grid grid-cols-2 gap-4">
+                            <FormField
+                                control={form.control}
+                                name="teamMemberId"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Team Member</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select team member" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="none">None</SelectItem>
+                                                {projectTeams.map((team) => (
+                                                    <div key={team.id}>
+                                                        <div className="px-2 py-1.5 text-xs font-semibold text-zinc-500 uppercase bg-zinc-50">{team.name}</div>
+                                                        {team.members?.map((tm) => (
+                                                            <SelectItem key={tm.id} value={tm.id} className="pl-6">
+                                                                {tm.name}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </div>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="dueDate"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Due Date</FormLabel>
+                                        <FormControl>
+                                            <Input {...field} type="date" disabled={isPending} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
                         <FormField
                             control={form.control}
-                            name="dueDate"
+                            name="isPaid"
                             render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Due Date</FormLabel>
+                                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-zinc-50/50">
                                     <FormControl>
-                                        <Input {...field} type="date" disabled={isPending} />
+                                        <Checkbox
+                                            checked={field.value}
+                                            onCheckedChange={field.onChange}
+                                            disabled={isPending}
+                                        />
                                     </FormControl>
-                                    <FormMessage />
+                                    <div className="space-y-1 leading-none">
+                                        <FormLabel>
+                                            Mark as Paid
+                                        </FormLabel>
+                                        <p className="text-xs text-muted-foreground">
+                                            Indicate if this task has been paid for.
+                                        </p>
+                                    </div>
                                 </FormItem>
                             )}
                         />

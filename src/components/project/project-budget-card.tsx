@@ -6,16 +6,16 @@ import { DollarSign } from "lucide-react";
 
 interface ProjectBudgetCardProps {
     budget: number;
-    totalPaid: number;
+    totalExpenses: number;
     currency?: string;
 }
 
 export const ProjectBudgetCard = ({
     budget = 0,
-    totalPaid = 0,
+    totalExpenses = 0,
     currency = "USD"
 }: ProjectBudgetCardProps) => {
-    const percentage = budget > 0 ? Math.min((totalPaid / budget) * 100, 100) : 0;
+    const percentage = budget > 0 ? Math.min((totalExpenses / budget) * 100, 100) : 0;
 
     const formatter = new Intl.NumberFormat("en-US", {
         style: "currency",
@@ -36,8 +36,8 @@ export const ProjectBudgetCard = ({
                 </div>
                 <Progress value={percentage} className="h-2" />
                 <div className="mt-4 flex justify-between items-center text-sm">
-                    <span className="text-muted-foreground">Total Paid:</span>
-                    <span className="font-semibold text-emerald-600">{formatter.format(totalPaid)}</span>
+                    <span className="text-muted-foreground">Total Expenses:</span>
+                    <span className="font-semibold text-emerald-600">{formatter.format(totalExpenses)}</span>
                 </div>
             </CardContent>
         </Card>

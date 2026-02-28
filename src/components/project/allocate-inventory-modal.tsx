@@ -66,17 +66,19 @@ export const AllocateInventoryModal = ({
 
     const onSubmit = (values: z.infer<typeof AllocateSchema>) => {
         startTransition(() => {
-            allocateInventoryItem(workspaceId, values.itemId, projectId, values.quantity)
-                .then((data) => {
-                    if (data?.error) {
-                        toast.error(data.error);
-                    }
-                    if (data?.success) {
-                        toast.success("Item allocated successfully");
-                        form.reset();
-                        router.refresh();
-                    }
-                });
+            allocateInventoryItem(workspaceId, values.itemId, {
+                projectId,
+                quantity: values.quantity
+            }).then((data) => {
+                if (data?.error) {
+                    toast.error(data.error);
+                }
+                if (data?.success) {
+                    toast.success("Item allocated successfully");
+                    form.reset();
+                    router.refresh();
+                }
+            });
         });
     };
 

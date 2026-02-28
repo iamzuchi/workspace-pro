@@ -60,8 +60,8 @@ const InventoryPage = async ({ params }: { params: Promise<{ workspaceId: string
                 <h2 className="text-3xl font-bold tracking-tight">Inventory Tracker</h2>
                 <div className="flex items-center space-x-2">
                     <CreateInventoryModal>
-                        <Button>
-                            <Plus className="mr-2 h-4 w-4" /> Add Item
+                        <Button className="text-base h-11 px-6">
+                            <Plus className="mr-2 h-5 w-5" /> Add Item
                         </Button>
                     </CreateInventoryModal>
                 </div>

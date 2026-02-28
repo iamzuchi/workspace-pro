@@ -13,7 +13,7 @@ export const createExpense = async (workspaceId: string, values: z.infer<typeof 
     const validatedFields = CreateExpenseSchema.safeParse(values);
     if (!validatedFields.success) return { error: "Invalid fields" };
 
-    const { title, category, amount, date, receiptUrl } = validatedFields.data;
+    const { title, category, amount, date, receiptUrl, projectId } = validatedFields.data;
 
     try {
         const expense = await prisma.expense.create({
@@ -24,10 +24,14 @@ export const createExpense = async (workspaceId: string, values: z.infer<typeof 
                 amount,
                 date,
                 receiptUrl,
+                projectId,
             }
         });
 
         revalidatePath(`/${workspaceId}/finance`);
+        if (projectId) {
+            revalidatePath(`/${workspaceId}/projects/${projectId}`);
+        }
         return { success: "Expense created", expense };
     } catch (error) {
         console.error(error);

@@ -9,17 +9,17 @@ const pool = new Pool({
 const adapter = new PrismaPg(pool);
 
 const globalForPrisma = globalThis as unknown as {
-  prisma_v2?: PrismaClient;
+  prisma_v3?: PrismaClient;
 };
 
 export const prisma =
-  globalForPrisma.prisma_v2 ??
+  globalForPrisma.prisma_v3 ??
   new PrismaClient({
     adapter,
   });
 
 if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma_v2 = prisma;
+  globalForPrisma.prisma_v3 = prisma;
 }
 
 // Force reload after schema changes

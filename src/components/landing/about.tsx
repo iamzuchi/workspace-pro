@@ -47,6 +47,8 @@ export const About = () => {
                             <Image
                                 src="/feature-tasks.png"
                                 alt="Task Management"
+                                width={800}
+                                height={600}
                                 className="w-full h-auto"
                             />
                         </div>
@@ -54,6 +56,8 @@ export const About = () => {
                             <Image
                                 src="/feature-finance.png"
                                 alt="Finance Tracking"
+                                width={800}
+                                height={600}
                                 className="w-full h-auto"
                             />
                         </div>

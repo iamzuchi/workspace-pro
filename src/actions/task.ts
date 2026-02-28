@@ -17,6 +17,8 @@ export const createTask = async (
         dueDate?: Date;
         startDate?: Date;
         assignedUserId?: string;
+        teamMemberId?: string;
+        isPaid?: boolean;
     }
 ) => {
     const user = await currentUser();
@@ -67,6 +69,8 @@ export const updateTask = async (
         dueDate: Date;
         startDate: Date;
         assignedUserId: string;
+        teamMemberId: string | null;
+        isPaid: boolean;
         completedAt: Date;
     }>
 ) => {
@@ -176,8 +180,86 @@ export const getProjectTasks = async (projectId: string) => {
                     image: true,
                     email: true,
                 }
-            }
-        },
+            },
+            teamMember: {
+                select: {
+                    id: true,
+                    name: true,
+                }
+            },
+            comments: {
+                include: {
+                    user: {
+                        select: {
+                            name: true,
+                            image: true,
+                        }
+                    }
+                },
+                orderBy: {
+                    createdAt: "asc"
+                }
+            },
+            _count: {
+                select: { comments: true }
+            } as any
+        } as any,
         orderBy: { createdAt: "desc" },
     });
+};
+
+export const addTaskComment = async (workspaceId: string, projectId: string, taskId: string, content: string) => {
+    const user = await currentUser();
+    if (!user) return { error: "Unauthorized" };
+
+    if (!content || content.trim() === "") {
+        return { error: "Comment cannot be empty" };
+    }
+
+    try {
+        const comment = await (prisma.comment as any).create({
+            data: {
+                content,
+                taskId,
+                projectId,
+                userId: user.id
+            },
+            include: {
+                user: {
+                    select: {
+                        name: true,
+                        image: true,
+                    }
+                }
+            }
+        });
+
+        revalidatePath(`/${workspaceId}/projects/${projectId}`);
+        return { success: "Comment added", comment };
+    } catch (error) {
+        console.error("Failed to add comment:", error);
+        return { error: "Failed to add comment" };
+    }
+};
+
+export const deleteTaskComment = async (workspaceId: string, projectId: string, commentId: string) => {
+    const user = await currentUser();
+    if (!user) return { error: "Unauthorized" };
+
+    try {
+        const comment = await prisma.comment.findUnique({ where: { id: commentId } });
+        if (!comment) return { error: "Comment not found" };
+
+        if (comment.userId !== user.id) {
+            return { error: "Unauthorized to delete this comment" };
+        }
+
+        await prisma.comment.delete({ where: { id: commentId } });
+
+        revalidatePath(`/${workspaceId}/projects/${projectId}`);
+        return { success: "Comment deleted" };
+    } catch (error) {
+        console.error("Failed to delete comment:", error);
+        return { error: "Failed to delete comment" };
+    }
 };

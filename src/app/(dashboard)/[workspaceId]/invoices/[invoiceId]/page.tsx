@@ -25,6 +25,11 @@ const InvoiceDetailsPage = async ({
             contractor: true,
             project: true,
             team: true,
+            payments: {
+                orderBy: {
+                    date: 'desc'
+                }
+            },
             activities: {
                 include: {
                     user: true
@@ -32,8 +37,9 @@ const InvoiceDetailsPage = async ({
                 orderBy: {
                     createdAt: 'desc'
                 }
-            }
-        },
+            },
+            deletionRequestedBy: true
+        } as any,
     });
 
     if (!invoice) redirect(`/${workspaceId}/finance?tab=invoices`);
@@ -52,6 +58,7 @@ const InvoiceDetailsPage = async ({
     });
 
     const canSeeHistory = member?.role === Role.ADMIN || member?.role === Role.ACCOUNTANT;
+    const isAdmin = member?.role === Role.ADMIN;
 
     const serializedInvoice = serializeDecimal(invoice);
 
@@ -61,6 +68,7 @@ const InvoiceDetailsPage = async ({
                 workspace={workspace}
                 invoice={serializedInvoice}
                 workspaceId={workspaceId}
+                isAdmin={isAdmin}
             />
             {canSeeHistory && (
                 <InvoiceHistory activities={serializedInvoice.activities} />

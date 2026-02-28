@@ -5,6 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Building2, Users, FolderKanban, Plus, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { CreateWorkspaceTrigger } from "@/components/workspace/create-workspace-trigger";
+import { UserButton } from "@/components/user-button";
 import Image from "next/image";
 
 const WorkspacesPage = async () => {
@@ -14,19 +16,22 @@ const WorkspacesPage = async () => {
     const workspaces = await getWorkspaces(user.id);
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-zinc-50 to-zinc-100 p-8">
+        <div className="min-h-screen bg-linear-to-br from-zinc-50 to-zinc-100 p-8">
             <div className="max-w-7xl mx-auto space-y-8">
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-4xl font-bold tracking-tight">Your Workspaces</h1>
                         <p className="text-muted-foreground mt-2">Select a workspace to continue or create a new one</p>
                     </div>
-                    <Button size="lg" className="bg-emerald-600 hover:bg-emerald-700" asChild>
-                        <Link href="/onboarding">
-                            <Plus className="h-5 w-5 mr-2" />
-                            Create Workspace
-                        </Link>
-                    </Button>
+                    <div className="flex items-center gap-4">
+                        <CreateWorkspaceTrigger>
+                            <Button size="lg" className="bg-emerald-600 hover:bg-emerald-700">
+                                <Plus className="h-5 w-5 mr-2" />
+                                Create Workspace
+                            </Button>
+                        </CreateWorkspaceTrigger>
+                        <UserButton />
+                    </div>
                 </div>
 
                 {workspaces.length === 0 ? (
@@ -37,12 +42,12 @@ const WorkspacesPage = async () => {
                             <p className="text-zinc-500 mb-6 text-center max-w-md">
                                 Get started by creating your first workspace to manage projects, teams, and finances.
                             </p>
-                            <Button size="lg" className="bg-emerald-600 hover:bg-emerald-700" asChild>
-                                <Link href="/onboarding">
+                            <CreateWorkspaceTrigger>
+                                <Button size="lg" className="bg-emerald-600 hover:bg-emerald-700">
                                     <Plus className="h-5 w-5 mr-2" />
                                     Create Your First Workspace
-                                </Link>
-                            </Button>
+                                </Button>
+                            </CreateWorkspaceTrigger>
                         </CardContent>
                     </Card>
                 ) : (
@@ -57,7 +62,7 @@ const WorkspacesPage = async () => {
                                         <div className="flex items-start justify-between">
                                             <div className="flex items-center gap-3">
                                                 {workspace.logo ? (
-                                                    <div className="relative h-12 w-12 rounded-lg overflow-hidden bg-zinc-100 flex-shrink-0">
+                                                    <div className="relative h-12 w-12 rounded-lg overflow-hidden bg-zinc-100 shrink-0">
                                                         <Image
                                                             src={workspace.logo}
                                                             alt={workspace.name}
@@ -66,7 +71,7 @@ const WorkspacesPage = async () => {
                                                         />
                                                     </div>
                                                 ) : (
-                                                    <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center flex-shrink-0">
+                                                    <div className="h-12 w-12 rounded-lg bg-linear-to-br from-emerald-500 to-teal-600 flex items-center justify-center shrink-0">
                                                         <Building2 className="h-6 w-6 text-white" />
                                                     </div>
                                                 )}
@@ -77,7 +82,7 @@ const WorkspacesPage = async () => {
                                                     </CardDescription>
                                                 </div>
                                             </div>
-                                            <ArrowRight className="h-5 w-5 text-zinc-400 group-hover:text-emerald-600 group-hover:translate-x-1 transition-all flex-shrink-0" />
+                                            <ArrowRight className="h-5 w-5 text-zinc-400 group-hover:text-emerald-600 group-hover:translate-x-1 transition-all shrink-0" />
                                         </div>
                                         {workspace.description && (
                                             <p className="text-sm text-zinc-600 line-clamp-2">{workspace.description}</p>

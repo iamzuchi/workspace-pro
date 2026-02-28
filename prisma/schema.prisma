@@ -25,6 +25,7 @@ enum ProjectStatus {
 enum InvoiceStatus {
   DRAFT
   SENT
+  PARTIALLY_PAID
   PAID
   OVERDUE
 }
@@ -64,6 +65,7 @@ model User {
   activities    Activity[]
   projectMembers ProjectMember[]
   assignedTasks Task[]
+  deletionRequests Invoice[] @relation("DeletionRequests")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -182,6 +184,7 @@ model Project {
   tasks       Task[]
   teams       Team[]
   reminders   Reminder[]
+  expenses    Expense[]
 
 
   createdAt   DateTime       @default(now())
@@ -222,13 +225,15 @@ model InventoryItem {
 }
 
 model InventoryAllocation {
-  id        String @id @default(cuid())
+  id        String  @id @default(cuid())
   itemId    String
-  projectId String
+  projectId String?
+  recipient String?
+  notes     String?
   quantity  Int
 
   item    InventoryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
-  project Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project Project?      @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   allocatedAt DateTime @default(now())
 }
@@ -281,6 +286,10 @@ model Invoice {
 
   items      InvoiceItem[]
   activities Activity[]
+
+  deletionRequested   Boolean @default(false)
+  deletionRequestedById String?
+  deletionRequestedBy   User?   @relation("DeletionRequests", fields: [deletionRequestedById], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -344,14 +353,19 @@ model Notification {
 model Comment {
   id        String   @id @default(cuid())
   content   String
-  projectId String
+  projectId String?
+  taskId    String?
   userId    String
   
-  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  task      Task?    @relation(fields: [taskId], references: [id], onDelete: Cascade)
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([projectId])
+  @@index([taskId])
 }
 
 model Activity {
@@ -367,6 +381,15 @@ model Activity {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
+}
+
+model PasswordResetToken {
+  id      String   @id @default(cuid())
+  email   String
+  token   String   @unique
+  expires DateTime
+
+  @@unique([email, token])
 }
 
 model Document {
@@ -415,9 +438,15 @@ model Task {
   assignedUserId String?
   assignedUser   User?   @relation(fields: [assignedUserId], references: [id])
   
+  teamMemberId   String?
+  teamMember     TeamMember?   @relation(fields: [teamMemberId], references: [id])
+
+  isPaid         Boolean       @default(false)
+  
   project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   reminders   Reminder[]
+  comments    Comment[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -426,6 +455,7 @@ model Task {
   @@index([projectId])
   @@index([status])
   @@index([assignedUserId])
+  @@index([teamMemberId])
 }
 
 model Team {
@@ -457,6 +487,7 @@ model TeamMember {
   address    String?
 
   team       Team    @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  tasks      Task[]
 
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -490,6 +521,9 @@ model Expense {
   
   // Relation to Workspace
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  
+  projectId   String?
+  project     Project?  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { TaskStatus, TaskPriority, Task } from "@prisma/client";
 import { format } from "date-fns";
+import { Checkbox } from "@/components/ui/checkbox";
 
 import {
     Dialog,
@@ -43,16 +44,28 @@ const TaskSchema = z.object({
     priority: z.nativeEnum(TaskPriority),
     dueDate: z.string().optional(),
     assignedUserId: z.string().optional(),
+    teamMemberId: z.string().optional(),
+    isPaid: z.boolean(),
 });
 
 interface EditTaskModalProps {
     workspaceId: string;
     projectId: string;
-    task: Task | null;
+    task: (Task & {
+        comments: any[];
+        _count?: {
+            comments: number;
+        }
+    }) | null;
     open: boolean;
     onOpenChange: (open: boolean) => void;
     members: { id: string; name: string | null; image?: string | null }[];
+    projectTeams?: { id: string; name: string; members: { id: string; name: string }[] }[];
+    currentUserId: string;
 }
+
+import { TaskComments } from "./task-comments";
+import { Separator } from "@/components/ui/separator";
 
 export const EditTaskModal = ({
     workspaceId,
@@ -61,6 +74,8 @@ export const EditTaskModal = ({
     open,
     onOpenChange,
     members,
+    projectTeams = [],
+    currentUserId,
 }: EditTaskModalProps) => {
     const [isPending, startTransition] = useTransition();
 
@@ -72,7 +87,9 @@ export const EditTaskModal = ({
             status: "TODO",
             priority: "MEDIUM",
             dueDate: "",
-            assignedUserId: "",
+            assignedUserId: "none",
+            teamMemberId: "none",
+            isPaid: false,
         },
     });
 
@@ -84,7 +101,9 @@ export const EditTaskModal = ({
                 status: task.status,
                 priority: task.priority,
                 dueDate: task.dueDate ? format(new Date(task.dueDate), "yyyy-MM-dd") : "",
-                assignedUserId: task.assignedUserId || "",
+                assignedUserId: task.assignedUserId || "none",
+                teamMemberId: task.teamMemberId || "none",
+                isPaid: task.isPaid,
             });
         }
     }, [task, form, open]);
@@ -96,7 +115,8 @@ export const EditTaskModal = ({
             updateTask(workspaceId, projectId, task.id, {
                 ...values,
                 dueDate: values.dueDate ? new Date(values.dueDate) : undefined,
-                assignedUserId: values.assignedUserId || undefined,
+                assignedUserId: values.assignedUserId && values.assignedUserId !== "none" ? values.assignedUserId : undefined,
+                teamMemberId: values.teamMemberId && values.teamMemberId !== "none" ? values.teamMemberId : undefined,
             }).then((data) => {
                 if (data.error) toast.error(data.error);
                 if (data.success) {
@@ -205,6 +225,7 @@ export const EditTaskModal = ({
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
+                                            <SelectItem value="none">None</SelectItem>
                                             {members.map((member) => (
                                                 <SelectItem key={member.id} value={member.id}>
                                                     {member.name || "Unnamed User"}
@@ -216,16 +237,71 @@ export const EditTaskModal = ({
                                 </FormItem>
                             )}
                         />
+                        <div className="grid grid-cols-2 gap-4">
+                            <FormField
+                                control={form.control}
+                                name="teamMemberId"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Team Member</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select team member" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="none">None</SelectItem>
+                                                {projectTeams.map((team) => (
+                                                    <div key={team.id}>
+                                                        <div className="px-2 py-1.5 text-xs font-semibold text-zinc-500 uppercase bg-zinc-50">{team.name}</div>
+                                                        {team.members?.map((tm) => (
+                                                            <SelectItem key={tm.id} value={tm.id} className="pl-6">
+                                                                {tm.name}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </div>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="dueDate"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Due Date</FormLabel>
+                                        <FormControl>
+                                            <Input {...field} type="date" disabled={isPending} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
                         <FormField
                             control={form.control}
-                            name="dueDate"
+                            name="isPaid"
                             render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Due Date</FormLabel>
+                                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-zinc-50/50">
                                     <FormControl>
-                                        <Input {...field} type="date" disabled={isPending} />
+                                        <Checkbox
+                                            checked={field.value}
+                                            onCheckedChange={field.onChange}
+                                            disabled={isPending}
+                                        />
                                     </FormControl>
-                                    <FormMessage />
+                                    <div className="space-y-1 leading-none">
+                                        <FormLabel>
+                                            Mark as Paid
+                                        </FormLabel>
+                                        <p className="text-xs text-muted-foreground">
+                                            Indicate if this task has been paid for.
+                                        </p>
+                                    </div>
                                 </FormItem>
                             )}
                         />
@@ -235,6 +311,19 @@ export const EditTaskModal = ({
                         </Button>
                     </form>
                 </Form>
+
+                {task && (
+                    <>
+                        <Separator className="my-6" />
+                        <TaskComments
+                            workspaceId={workspaceId}
+                            projectId={projectId}
+                            taskId={task.id}
+                            currentUserId={currentUserId}
+                            initialComments={task.comments || []}
+                        />
+                    </>
+                )}
             </DialogContent>
         </Dialog>
     );

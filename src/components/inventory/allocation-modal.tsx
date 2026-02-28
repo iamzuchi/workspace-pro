@@ -40,16 +40,26 @@ export const AllocationModal = ({
     projects,
     maxQuantity
 }: AllocationModalProps) => {
+    const [usageType, setUsageType] = useState<"PROJECT" | "EXTERNAL">("PROJECT");
     const [projectId, setProjectId] = useState("");
+    const [recipient, setRecipient] = useState("");
+    const [notes, setNotes] = useState("");
     const [quantity, setQuantity] = useState(1);
     const [isPending, startTransition] = useTransition();
     const router = useRouter();
 
     const onAllocate = () => {
-        if (!projectId || quantity <= 0 || quantity > maxQuantity) return;
+        if (usageType === "PROJECT" && !projectId) return;
+        if (usageType === "EXTERNAL" && !recipient) return;
+        if (quantity <= 0 || quantity > maxQuantity) return;
 
         startTransition(() => {
-            allocateInventoryItem(workspaceId, itemId, projectId, quantity).then((data) => {
+            allocateInventoryItem(workspaceId, itemId, {
+                projectId: usageType === "PROJECT" ? projectId : undefined,
+                recipient: usageType === "EXTERNAL" ? recipient : undefined,
+                notes: notes || undefined,
+                quantity
+            }).then((data) => {
                 if (data.success) {
                     router.refresh();
                     onClose();
@@ -64,24 +74,65 @@ export const AllocationModal = ({
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Allocate {itemName}</DialogTitle>
+                    <DialogTitle>Record Usage - {itemName}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                     <div className="space-y-2">
-                        <Label>Project</Label>
-                        <Select onValueChange={setProjectId} disabled={isPending}>
+                        <Label>Usage Type</Label>
+                        <Select
+                            value={usageType}
+                            onValueChange={(val: any) => setUsageType(val)}
+                            disabled={isPending}
+                        >
                             <SelectTrigger>
-                                <SelectValue placeholder="Select a project" />
+                                <SelectValue placeholder="Select usage type" />
                             </SelectTrigger>
                             <SelectContent>
-                                {projects.map((project) => (
-                                    <SelectItem key={project.id} value={project.id}>
-                                        {project.name}
-                                    </SelectItem>
-                                ))}
+                                <SelectItem value="PROJECT">Allocate to Project</SelectItem>
+                                <SelectItem value="EXTERNAL">External Usage</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
+
+                    {usageType === "PROJECT" ? (
+                        <div className="space-y-2">
+                            <Label>Project</Label>
+                            <Select onValueChange={setProjectId} disabled={isPending}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a project" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {projects.map((project) => (
+                                        <SelectItem key={project.id} value={project.id}>
+                                            {project.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="space-y-2">
+                                <Label>Recipient / Reason</Label>
+                                <Input
+                                    placeholder="e.g. Office Supply, John Doe"
+                                    value={recipient}
+                                    onChange={(e) => setRecipient(e.target.value)}
+                                    disabled={isPending}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Notes (Optional)</Label>
+                                <Input
+                                    placeholder="Extra details about the usage"
+                                    value={notes}
+                                    onChange={(e) => setNotes(e.target.value)}
+                                    disabled={isPending}
+                                />
+                            </div>
+                        </>
+                    )}
+
                     <div className="space-y-2">
                         <Label>Quantity (Max: {maxQuantity})</Label>
                         <Input
@@ -96,7 +147,12 @@ export const AllocationModal = ({
                 </div>
                 <DialogFooter>
                     <Button variant="outline" onClick={onClose} disabled={isPending}>Cancel</Button>
-                    <Button onClick={onAllocate} disabled={isPending || !projectId}>Allocate Item</Button>
+                    <Button
+                        onClick={onAllocate}
+                        disabled={isPending || (usageType === "PROJECT" && !projectId) || (usageType === "EXTERNAL" && !recipient)}
+                    >
+                        Record Usage
+                    </Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

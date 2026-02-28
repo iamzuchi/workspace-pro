@@ -12,7 +12,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MoreHorizontal, Pencil, Trash } from "lucide-react";
+import { MoreHorizontal, Pencil, Trash, Filter, LayoutGrid, List, MessageSquare } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -20,7 +20,15 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { deleteTask } from "@/actions/task";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { updateTask, deleteTask } from "@/actions/task";
 import { toast } from "sonner";
 import { useTransition } from "react";
 
@@ -28,6 +36,7 @@ import { EditTaskModal } from "@/components/project/edit-task-modal";
 import { SetReminderModal } from "@/components/project/set-reminder-modal";
 import { useState } from "react";
 import { Bell } from "lucide-react";
+import { ProjectTasksCardView } from "./project-tasks-card-view";
 
 interface ProjectTasksTableProps {
     workspaceId: string;
@@ -38,8 +47,18 @@ interface ProjectTasksTableProps {
             image: string | null;
             email: string;
         } | null;
+        teamMember: {
+            id: string;
+            name: string;
+        } | null;
+        _count?: {
+            comments: number;
+        };
+        comments?: any[];
     })[];
     members: { id: string; name: string | null; image?: string | null }[];
+    projectTeams?: { id: string; name: string; members: { id: string; name: string }[] }[];
+    currentUserId: string;
 }
 
 export const ProjectTasksTable = ({
@@ -47,6 +66,8 @@ export const ProjectTasksTable = ({
     projectId,
     tasks,
     members,
+    projectTeams = [],
+    currentUserId,
 }: ProjectTasksTableProps) => {
     const [isPending, startTransition] = useTransition();
     const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -54,11 +75,25 @@ export const ProjectTasksTable = ({
     const [reminderTask, setReminderTask] = useState<Task | null>(null);
     const [showReminderModal, setShowReminderModal] = useState(false);
 
+    const [statusFilter, setStatusFilter] = useState<string>("ALL");
+    const [priorityFilter, setPriorityFilter] = useState<string>("ALL");
+    const [paidFilter, setPaidFilter] = useState<string>("ALL");
+    const [view, setView] = useState<"TABLE" | "CARD">("TABLE");
+
     const onDelete = (taskId: string) => {
         startTransition(() => {
             deleteTask(workspaceId, projectId, taskId).then((data) => {
                 if (data.error) toast.error(data.error);
                 if (data.success) toast.success(data.success);
+            });
+        });
+    };
+
+    const togglePayment = (taskId: string, isPaid: boolean) => {
+        startTransition(() => {
+            updateTask(workspaceId, projectId, taskId, { isPaid }).then((data) => {
+                if (data.error) toast.error(data.error);
+                if (data.success) toast.success("Task payment status updated");
             });
         });
     };
@@ -83,115 +118,234 @@ export const ProjectTasksTable = ({
         }
     };
 
+    const filteredTasks = tasks.filter((task) => {
+        if (statusFilter !== "ALL" && task.status !== statusFilter) return false;
+        if (priorityFilter !== "ALL" && task.priority !== priorityFilter) return false;
+        if (paidFilter !== "ALL") {
+            const isPaidValue = paidFilter === "PAID";
+            if (task.isPaid !== isPaidValue) return false;
+        }
+        return true;
+    });
+
     return (
-        <div className="rounded-md border overflow-x-auto">
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>Title</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Priority</TableHead>
-                        <TableHead>Due Date</TableHead>
-                        <TableHead>Assigned To</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {tasks.length === 0 && (
-                        <TableRow>
-                            <TableCell colSpan={6} className="h-24 text-center">
-                                No tasks found.
-                            </TableCell>
-                        </TableRow>
-                    )}
-                    {tasks.map((task) => (
-                        <TableRow key={task.id}>
-                            <TableCell className="font-medium">
-                                <div>
-                                    <p>{task.title}</p>
-                                    {task.description && (
-                                        <p className="text-xs text-muted-foreground truncate max-w-[200px]">
-                                            {task.description}
-                                        </p>
-                                    )}
-                                </div>
-                            </TableCell>
-                            <TableCell>
-                                <Badge variant="outline" className={getStatusColor(task.status)}>
-                                    {task.status.replace("_", " ")}
-                                </Badge>
-                            </TableCell>
-                            <TableCell>
-                                <Badge variant="outline" className={getPriorityColor(task.priority)}>
-                                    {task.priority}
-                                </Badge>
-                            </TableCell>
-                            <TableCell className="text-muted-foreground">
-                                {task.dueDate ? format(new Date(task.dueDate), "MMM d, yyyy") : "No date"}
-                            </TableCell>
-                            <TableCell>
-                                {task.assignedUser ? (
-                                    <div className="flex items-center gap-2">
-                                        <Avatar className="h-6 w-6">
-                                            <AvatarImage src={task.assignedUser.image || ""} />
-                                            <AvatarFallback>{task.assignedUser.name?.[0] || "U"}</AvatarFallback>
-                                        </Avatar>
-                                        <span className="text-sm">{task.assignedUser.name}</span>
-                                    </div>
-                                ) : (
-                                    <span className="text-sm text-zinc-400">Unassigned</span>
-                                )}
-                            </TableCell>
-                            <TableCell className="text-right">
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" className="h-8 w-8 p-0">
-                                            <MoreHorizontal className="h-4 w-4" />
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                        <DropdownMenuItem
+        <div className="space-y-4">
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-x-2">
+                    <Button
+                        variant={view === "TABLE" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setView("TABLE")}
+                        className="h-8 w-8 p-0"
+                    >
+                        <List className="h-4 w-4" />
+                    </Button>
+                    <Button
+                        variant={view === "CARD" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setView("CARD")}
+                        className="h-8 w-8 p-0"
+                    >
+                        <LayoutGrid className="h-4 w-4" />
+                    </Button>
+                </div>
+            </div>
+            <div className="flex flex-col sm:flex-row items-center gap-4 mb-4">
+                <div className="flex items-center gap-x-2 text-zinc-500">
+                    <Filter className="h-4 w-4" />
+                    <span className="text-sm font-medium">Filters:</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                        <SelectTrigger className="w-[140px]">
+                            <SelectValue placeholder="Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="ALL">All Statuses</SelectItem>
+                            <SelectItem value="TODO">To Do</SelectItem>
+                            <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+                            <SelectItem value="COMPLETED">Completed</SelectItem>
+                            <SelectItem value="ON_HOLD">On Hold</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                        <SelectTrigger className="w-[140px]">
+                            <SelectValue placeholder="Priority" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="ALL">All Priorities</SelectItem>
+                            <SelectItem value="LOW">Low</SelectItem>
+                            <SelectItem value="MEDIUM">Medium</SelectItem>
+                            <SelectItem value="HIGH">High</SelectItem>
+                            <SelectItem value="URGENT">Urgent</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <Select value={paidFilter} onValueChange={setPaidFilter}>
+                        <SelectTrigger className="w-[140px]">
+                            <SelectValue placeholder="Payment" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="ALL">All Payment Types</SelectItem>
+                            <SelectItem value="PAID">Paid</SelectItem>
+                            <SelectItem value="UNPAID">Unpaid</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+            </div>
+            {view === "TABLE" ? (
+                <div className="rounded-md border overflow-x-auto">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead className="w-[50px]">#</TableHead>
+                                <TableHead>Title</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead>Priority</TableHead>
+                                <TableHead>Due Date</TableHead>
+                                <TableHead>Assigned To</TableHead>
+                                <TableHead>Team Member</TableHead>
+                                <TableHead>Paid</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {filteredTasks.length === 0 && (
+                                <TableRow>
+                                    <TableCell colSpan={9} className="h-24 text-center">
+                                        No tasks found.
+                                    </TableCell>
+                                </TableRow>
+                            )}
+                            {filteredTasks.map((task, index) => (
+                                <TableRow key={task.id}>
+                                    <TableCell className="font-medium text-zinc-500">{index + 1}</TableCell>
+                                    <TableCell className="font-medium">
+                                        <div>
+                                            <div className="flex items-center gap-2">
+                                                <p>{task.title}</p>
+                                                {task._count && task._count.comments > 0 && (
+                                                    <div className="flex items-center gap-1 text-xs text-muted-foreground bg-zinc-100 rounded-full px-2 py-0.5" title={`${task._count.comments} comments`}>
+                                                        <MessageSquare className="h-3 w-3" />
+                                                        {task._count.comments}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            {task.description && (
+                                                <p className="text-xs text-muted-foreground truncate max-w-[200px]">
+                                                    {task.description}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge variant="outline" className={getStatusColor(task.status)}>
+                                            {task.status.replace("_", " ")}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge variant="outline" className={getPriorityColor(task.priority)}>
+                                            {task.priority}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell className="text-muted-foreground">
+                                        {task.dueDate ? format(new Date(task.dueDate), "MMM d, yyyy") : "No date"}
+                                    </TableCell>
+                                    <TableCell>
+                                        {task.assignedUser ? (
+                                            <div className="flex items-center gap-2">
+                                                <Avatar className="h-6 w-6">
+                                                    <AvatarImage src={task.assignedUser.image || ""} />
+                                                    <AvatarFallback>{task.assignedUser.name?.[0] || "U"}</AvatarFallback>
+                                                </Avatar>
+                                                <span className="text-sm">{task.assignedUser.name}</span>
+                                            </div>
+                                        ) : (
+                                            <span className="text-sm text-zinc-400">Unassigned</span>
+                                        )}
+                                    </TableCell>
+                                    <TableCell>
+                                        {task.teamMember ? (
+                                            <span className="text-sm">{task.teamMember.name}</span>
+                                        ) : (
+                                            <span className="text-sm text-zinc-400">None</span>
+                                        )}
+                                    </TableCell>
+                                    <TableCell>
+                                        <Checkbox
+                                            checked={task.isPaid}
+                                            onCheckedChange={(checked) => togglePayment(task.id, checked as boolean)}
                                             disabled={isPending}
-                                            onClick={() => {
-                                                setEditingTask(task);
-                                                setShowEditModal(true);
-                                            }}
-                                        >
-                                            <Pencil className="mr-2 h-4 w-4" />
-                                            Edit
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem
-                                            disabled={isPending}
-                                            onClick={() => {
-                                                setReminderTask(task);
-                                                setShowReminderModal(true);
-                                            }}
-                                        >
-                                            <Bell className="mr-2 h-4 w-4" />
-                                            Set Reminder
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem
-                                            className="text-destructive"
-                                            disabled={isPending}
-                                            onClick={() => onDelete(task.id)}
-                                        >
-                                            <Trash className="mr-2 h-4 w-4" />
-                                            Delete
-                                        </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            </TableCell>
-                        </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
+                                        />
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                                    <MoreHorizontal className="h-4 w-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                <DropdownMenuItem
+                                                    disabled={isPending}
+                                                    onClick={() => {
+                                                        setEditingTask(task);
+                                                        setShowEditModal(true);
+                                                    }}
+                                                >
+                                                    <Pencil className="mr-2 h-4 w-4" />
+                                                    Edit
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    disabled={isPending}
+                                                    onClick={() => {
+                                                        setReminderTask(task);
+                                                        setShowReminderModal(true);
+                                                    }}
+                                                >
+                                                    <Bell className="mr-2 h-4 w-4" />
+                                                    Set Reminder
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    className="text-destructive"
+                                                    disabled={isPending}
+                                                    onClick={() => onDelete(task.id)}
+                                                >
+                                                    <Trash className="mr-2 h-4 w-4" />
+                                                    Delete
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </div>
+            ) : (
+                <ProjectTasksCardView
+                    tasks={filteredTasks}
+                    onEdit={(task) => {
+                        setEditingTask(task);
+                        setShowEditModal(true);
+                    }}
+                    onDelete={onDelete}
+                    onReminder={(task) => {
+                        setReminderTask(task);
+                        setShowReminderModal(true);
+                    }}
+                    onTogglePayment={togglePayment}
+                    isPending={isPending}
+                />
+            )}
             <EditTaskModal
                 workspaceId={workspaceId}
                 projectId={projectId}
-                task={editingTask}
+                task={editingTask as any}
                 open={showEditModal}
                 onOpenChange={setShowEditModal}
                 members={members}
+                projectTeams={projectTeams}
+                currentUserId={currentUserId}
             />
             {reminderTask && (
                 <SetReminderModal
