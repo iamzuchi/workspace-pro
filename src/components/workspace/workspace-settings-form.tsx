@@ -39,6 +39,7 @@ interface WorkspaceSettingsFormProps {
         address: string | null;
         logo: string | null;
         currency: string;
+        themeColor: string | null;
     };
 }
 
@@ -55,6 +56,7 @@ export const WorkspaceSettingsForm = ({ workspace }: WorkspaceSettingsFormProps)
             description: workspace.description || "",
             address: workspace.address || "",
             currency: workspace.currency || "USD",
+            themeColor: workspace.themeColor || "#111827",
         },
     });
 
@@ -226,6 +228,38 @@ export const WorkspaceSettingsForm = ({ workspace }: WorkspaceSettingsFormProps)
                                         </FormControl>
                                         <FormDescription>
                                             Physical or business address (optional)
+                                        </FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="themeColor"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Workspace Theme Color</FormLabel>
+                                        <div className="flex items-center gap-4">
+                                            <FormControl>
+                                                <Input
+                                                    {...field}
+                                                    type="color"
+                                                    className="h-10 w-20 p-1 cursor-pointer"
+                                                    disabled={isPending}
+                                                />
+                                            </FormControl>
+                                            <div className="flex-1">
+                                                <Input
+                                                    {...field}
+                                                    placeholder="#111827"
+                                                    disabled={isPending}
+                                                    className="font-mono"
+                                                />
+                                            </div>
+                                        </div>
+                                        <FormDescription>
+                                            Customize the primary brand color for this workspace.
                                         </FormDescription>
                                         <FormMessage />
                                     </FormItem>

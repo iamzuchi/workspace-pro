@@ -2,6 +2,8 @@ import prisma from "@/lib/db";
 import { currentUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { getProjectTasks } from "@/actions/task";
 import { getProjectMembers, getContractors } from "@/actions/project-member";
 import { getComments, getActivities } from "@/actions/activities";
@@ -102,6 +104,12 @@ const ProjectDetailsPage = async ({
 
     return (
         <div className="flex-1 space-y-4 p-8 pt-6">
+            <div className="mb-2">
+                <Link href={`/${workspaceId}/projects`} className="flex w-fit items-center text-sm text-muted-foreground hover:text-foreground">
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back to Projects
+                </Link>
+            </div>
             <div className="flex items-start justify-between space-y-2">
                 <div>
                     <div className="flex items-center gap-2">

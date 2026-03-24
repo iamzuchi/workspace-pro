@@ -17,11 +17,11 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { RevenueChart } from "@/components/finance/revenue-chart";
 import { CreateExpenseModal } from "@/components/finance/create-expense-modal";
-import { deleteExpense } from "@/actions/expense"; // Though actions are usually client-side triggered, we handle delete via a client component or simpler form here.
-// Actually, for delete in a table, we should use a client component or a form with server action.
-// For simplicity in this iteration, I'll display the list. Deletion might need a small client component.
+import { deleteExpense } from "@/actions/expense";
 import { ExpenseReceiptButton } from "@/components/finance/expense-receipt-button";
 import { formatCurrency } from "@/lib/currency";
+import { ExportCsvButton } from "@/components/finance/export-csv-button";
+import { DeleteInvoiceButton } from "@/components/finance/delete-invoice-button";
 
 const FinancePage = async ({ params }: { params: Promise<{ workspaceId: string }> }) => {
     const { workspaceId } = await params;
@@ -219,6 +219,10 @@ const FinancePage = async ({ params }: { params: Promise<{ workspaceId: string }
                     </div>
                 </TabsContent>
                 <TabsContent value="invoices" className="space-y-4">
+                    <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-lg font-medium">Invoices</h3>
+                        <ExportCsvButton data={invoices} filename={`invoices-${workspaceId}`} type="INVOICE" />
+                    </div>
                     <div className="rounded-md border bg-white">
                         <Table>
                             <TableHeader>
@@ -259,10 +263,11 @@ const FinancePage = async ({ params }: { params: Promise<{ workspaceId: string }
                                             <TableCell>{invoice.dueDate ? format(invoice.dueDate, "MMM d, yyyy") : "-"}</TableCell>
                                             <TableCell>{invoice.project?.name || "-"}</TableCell>
                                             <TableCell>{invoice.team?.name || "-"}</TableCell>
-                                            <TableCell className="text-right">
+                                            <TableCell className="text-right flex items-center justify-end gap-2">
                                                 <Button size="sm" variant="ghost" asChild>
                                                     <Link href={`/${workspaceId}/invoices/${invoice.id}`}>View</Link>
                                                 </Button>
+                                                <DeleteInvoiceButton workspaceId={workspaceId} invoiceId={invoice.id} />
                                             </TableCell>
                                         </TableRow>
                                     )
