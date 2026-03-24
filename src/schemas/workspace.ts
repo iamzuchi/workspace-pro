@@ -12,4 +12,5 @@ export const UpdateWorkspaceSchema = z.object({
     description: z.string().optional(),
     address: z.string().optional(),
     currency: z.string().default("USD"),
+    themeColor: z.string().optional(),
 });

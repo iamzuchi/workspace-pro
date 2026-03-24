@@ -3,6 +3,7 @@ import { Sidebar } from "@/components/dashboard/sidebar";
 import prisma from "@/lib/db";
 import { currentUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { DynamicThemeHandler } from "@/components/workspace/dynamic-theme-handler";
 
 const WorkspaceLayout = async ({
     children,
@@ -44,12 +45,14 @@ const WorkspaceLayout = async ({
         select: {
             id: true,
             name: true,
-            logo: true
+            logo: true,
+            themeColor: true,
         }
     });
 
     return (
         <div className="h-full relative">
+            <DynamicThemeHandler color={currentWorkspace?.themeColor || null} />
             <div className="hidden h-full lg:flex lg:w-72 lg:flex-col lg:fixed lg:inset-y-0 z-80 bg-gray-900">
                 <Sidebar workspaces={workspaces} currentWorkspace={currentWorkspace} />
             </div>

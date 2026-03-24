@@ -2,10 +2,23 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, Briefcase, DollarSign, Clock, MapPin, Phone, BriefcaseBusiness, Pencil } from "lucide-react";
+import { Users, Briefcase, DollarSign, Clock, MapPin, Phone, BriefcaseBusiness, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { EditTeamModal } from "./edit-team-modal";
+import { deleteTeam } from "@/actions/team";
+import { toast } from "sonner";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 import { formatCurrency } from "@/lib/currency";
 
@@ -18,6 +31,16 @@ interface TeamListProps {
 
 export const TeamList = ({ teams, workspaceId, projects, currency }: TeamListProps) => {
     const [editingTeam, setEditingTeam] = useState<any>(null);
+    const [isPending, startTransition] = useTransition();
+
+    const handleDeleteTeam = (teamId: string) => {
+        startTransition(() => {
+            deleteTeam(workspaceId, teamId).then((data) => {
+                if (data.error) toast.error(data.error);
+                if (data.success) toast.success(data.success);
+            });
+        });
+    };
 
     if (teams.length === 0) {
         return (
@@ -48,6 +71,32 @@ export const TeamList = ({ teams, workspaceId, projects, currency }: TeamListPro
                                 >
                                     <Pencil className="h-4 w-4" />
                                 </Button>
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            disabled={isPending}
+                                            className="h-8 w-8 text-zinc-400 hover:text-rose-600 hover:bg-rose-50"
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Delete Team</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                Are you sure you want to delete the "{team.name}" team? This action cannot be undone and will remove all members from this team.
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={() => handleDeleteTeam(team.id)} className="bg-rose-600 hover:bg-rose-700 text-white">
+                                                Delete
+                                            </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
                             </div>
                         </div>
                         {team.project && (

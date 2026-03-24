@@ -24,13 +24,19 @@ export const deleteInvoice = async (workspaceId: string, invoiceId: string) => {
     if (member?.role !== Role.ADMIN) return { error: "Permission denied" };
 
     try {
-        await prisma.invoice.delete({
-            where: { id: invoiceId, workspaceId }
-        });
+        await prisma.$transaction([
+            prisma.payment.deleteMany({
+                where: { invoiceId, workspaceId }
+            }),
+            prisma.invoice.delete({
+                where: { id: invoiceId, workspaceId }
+            })
+        ]);
 
-        await logActivity(workspaceId, null, "DELETED_INVOICE", `Invoice ${invoiceId} deleted`);
+        await logActivity(workspaceId, null, "DELETED_INVOICE", `Invoice ${invoiceId} and its payments deleted`);
 
         revalidatePath(`/${workspaceId}/finance`);
+        revalidatePath(`/${workspaceId}`);
         return { success: "Invoice deleted" };
     } catch (error) {
         console.error(error);

@@ -25,6 +25,17 @@ export const createTask = async (
     if (!user) return { error: "Unauthorized" };
 
     try {
+        const existingTask = await prisma.task.findFirst({
+            where: {
+                projectId,
+                title: values.title
+            }
+        });
+
+        if (existingTask) {
+            return { error: "A task with this title already exists in this project." };
+        }
+
         const task = await prisma.task.create({
             data: {
                 ...values,
@@ -100,6 +111,20 @@ export const updateTask = async (
 
         if (!isOwner && !isAdmin && !isManager && !isAssignee) {
             return { error: "You do not have permission to edit this task" };
+        }
+
+        if (values.title && values.title !== existingTask.title) {
+            const duplicateTask = await prisma.task.findFirst({
+                where: {
+                    projectId,
+                    title: values.title,
+                    id: { not: taskId }
+                }
+            });
+
+            if (duplicateTask) {
+                return { error: "A task with this title already exists in this project." };
+            }
         }
 
         const task = await prisma.task.update({

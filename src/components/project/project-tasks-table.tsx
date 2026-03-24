@@ -12,7 +12,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MoreHorizontal, Pencil, Trash, Filter, LayoutGrid, List, MessageSquare } from "lucide-react";
+import { MoreHorizontal, Pencil, Trash, Filter, LayoutGrid, List, MessageSquare, Search, Download } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -78,7 +79,31 @@ export const ProjectTasksTable = ({
     const [statusFilter, setStatusFilter] = useState<string>("ALL");
     const [priorityFilter, setPriorityFilter] = useState<string>("ALL");
     const [paidFilter, setPaidFilter] = useState<string>("ALL");
+    const [searchQuery, setSearchQuery] = useState<string>("");
     const [view, setView] = useState<"TABLE" | "CARD">("TABLE");
+
+    const handleExportCSV = () => {
+        const headers = ["Title", "Status", "Priority", "Due Date", "Assigned To", "Team Member", "Paid"];
+        const rows = filteredTasks.map(t => [
+            `"${t.title.replace(/"/g, '""')}"`,
+            t.status,
+            t.priority,
+            t.dueDate ? format(new Date(t.dueDate), "MMM d, yyyy") : "",
+            t.assignedUser?.name || "Unassigned",
+            t.teamMember?.name || "None",
+            t.isPaid ? "Yes" : "No"
+        ]);
+        const csvContent = "data:text/csv;charset=utf-8," 
+            + headers.join(",") + "\n" 
+            + rows.map(e => e.join(",")).join("\n");
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `project-tasks.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
 
     const onDelete = (taskId: string) => {
         startTransition(() => {
@@ -125,13 +150,35 @@ export const ProjectTasksTable = ({
             const isPaidValue = paidFilter === "PAID";
             if (task.isPaid !== isPaidValue) return false;
         }
+        if (searchQuery.trim() !== "") {
+            const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase());
+            if (!matchesSearch) return false;
+        }
         return true;
     });
 
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between">
+                <div className="relative w-full max-w-sm">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-zinc-500" />
+                    <Input
+                        placeholder="Search tasks by title..."
+                        className="pl-9 bg-white"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                </div>
                 <div className="flex items-center gap-x-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleExportCSV}
+                        className="h-8"
+                    >
+                        <Download className="h-4 w-4 mr-2" />
+                        Export CSV
+                    </Button>
                     <Button
                         variant={view === "TABLE" ? "default" : "outline"}
                         size="sm"

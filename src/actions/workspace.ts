@@ -53,7 +53,7 @@ export const updateWorkspace = async (
     const validatedFields = UpdateWorkspaceSchema.safeParse(values);
     if (!validatedFields.success) return { error: "Invalid fields" };
 
-    const { name, description, address, currency } = validatedFields.data;
+    const { name, description, address, currency, themeColor } = validatedFields.data;
 
     try {
         await prisma.workspace.update({
@@ -63,6 +63,7 @@ export const updateWorkspace = async (
                 description,
                 address,
                 currency,
+                themeColor,
             }
         });
 
@@ -144,6 +145,7 @@ export const getWorkspaceById = async (workspaceId: string) => {
                 logo: true,
                 address: true,
                 currency: true,
+                themeColor: true,
                 _count: {
                     select: {
                         members: true,
