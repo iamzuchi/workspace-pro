@@ -63,7 +63,7 @@ const ProjectDetailsPage = async ({
         where: { workspaceId }
     });
 
-    const totalExpenses = project.expenses.reduce((acc, e) => acc + Number(e.amount), 0);
+    const totalExpenses = project.expenses.reduce((acc: number, e: any) => acc + Number(e.amount), 0);
 
     const [comments, activities, documents, tasks, members, contractors] = await Promise.all([
         getComments(projectId),

@@ -24,7 +24,6 @@ const InvoiceDetailsPage = async ({
             items: true,
             contractor: true,
             project: true,
-            team: true,
             payments: {
                 orderBy: {
                     date: 'desc'

@@ -26,10 +26,23 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { updateWorkspace, uploadWorkspaceLogo } from "@/actions/workspace";
+import { updateWorkspace, uploadWorkspaceLogo, deleteWorkspace } from "@/actions/workspace";
 import { CURRENCY_OPTIONS } from "@/lib/currency";
 import { toast } from "sonner";
 import Image from "next/image";
+import { AlertTriangle, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface WorkspaceSettingsFormProps {
     workspace: {
@@ -47,6 +60,8 @@ export const WorkspaceSettingsForm = ({ workspace }: WorkspaceSettingsFormProps)
     const [isPending, startTransition] = useTransition();
     const [logoPreview, setLogoPreview] = useState<string | null>(workspace.logo);
     const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const router = useRouter();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const form = useForm<any>({
@@ -301,6 +316,56 @@ export const WorkspaceSettingsForm = ({ workspace }: WorkspaceSettingsFormProps)
                             </div>
                         </form>
                     </Form>
+                </CardContent>
+            </Card>
+            <Card className="border-rose-200">
+                <CardHeader>
+                    <CardTitle className="text-rose-600 flex items-center gap-2">
+                        <AlertTriangle className="h-5 w-5" /> Danger Zone
+                    </CardTitle>
+                    <CardDescription>
+                        Once you delete a workspace, there is no going back. Please be certain.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="destructive" className="w-full sm:w-auto">
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete Workspace
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This action cannot be undone. This will permanently delete your
+                                    workspace "{workspace.name}" and remove all data including invoices, members, and projects.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction 
+                                    className="bg-rose-600 hover:bg-rose-700"
+                                    onClick={() => {
+                                        setIsDeleting(true);
+                                        deleteWorkspace(workspace.id).then((data) => {
+                                            if (data.success) {
+                                                toast.success(data.success);
+                                                router.push("/workspaces");
+                                            } else {
+                                                toast.error(data.error);
+                                            }
+                                            setIsDeleting(false);
+                                        });
+                                    }}
+                                    disabled={isDeleting}
+                                >
+                                    {isDeleting ? "Deleting..." : "Permanently Delete"}
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
                 </CardContent>
             </Card>
         </div>

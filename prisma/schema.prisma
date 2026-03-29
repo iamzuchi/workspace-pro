@@ -194,7 +194,6 @@ model Invoice {
   workspaceId           String
   projectId             String?
   contractorId          String?
-  teamId                String?
   number                String
   status                InvoiceStatus @default(DRAFT)
   totalAmount           Decimal       @db.Decimal(15, 2)
@@ -215,7 +214,6 @@ model Invoice {
   contractor            Contractor?   @relation(fields: [contractorId], references: [id])
   deletionRequestedBy   User?         @relation("DeletionRequests", fields: [deletionRequestedById], references: [id])
   project               Project?      @relation(fields: [projectId], references: [id])
-  team                  Team?         @relation(fields: [teamId], references: [id])
   workspace             Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   items                 InvoiceItem[]
   payments              Payment[]
@@ -241,7 +239,6 @@ model Payment {
   invoiceId    String?
   contractorId String?
   projectId    String?
-  teamId       String?
   amount       Decimal     @db.Decimal(15, 2)
   date         DateTime    @default(now())
   type         PaymentType @default(OUTGOING)
@@ -250,9 +247,8 @@ model Payment {
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
   contractor   Contractor? @relation(fields: [contractorId], references: [id])
-  invoice      Invoice?    @relation(fields: [invoiceId], references: [id])
+  invoice      Invoice?    @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
   project      Project?    @relation(fields: [projectId], references: [id])
-  team         Team?       @relation(fields: [teamId], references: [id])
   workspace    Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 }
 
@@ -371,8 +367,7 @@ model Team {
   description String?
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
-  invoices    Invoice[]
-  payments    Payment[]
+  expenses    Expense[]
   project     Project?     @relation(fields: [projectId], references: [id])
   workspace   Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   members     TeamMember[]
@@ -382,16 +377,17 @@ model Team {
 }
 
 model TeamMember {
-  id         String   @id @default(cuid())
+  id         String    @id @default(cuid())
   teamId     String
   name       String
   contact    String?
   occupation String?
   address    String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  expenses   Expense[]
   tasks      Task[]
-  team       Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  team       Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
 
   @@index([teamId])
 }
@@ -411,20 +407,27 @@ model Invitation {
 }
 
 model Expense {
-  id          String    @id @default(cuid())
-  workspaceId String
-  title       String
-  category    String
-  amount      Decimal   @db.Decimal(15, 2)
-  date        DateTime  @default(now())
-  receiptUrl  String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  projectId   String?
-  project     Project?  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  id           String        @id @default(cuid())
+  workspaceId  String
+  title        String
+  category     String
+  amount       Decimal       @db.Decimal(15, 2)
+  date         DateTime      @default(now())
+  receiptUrl   String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  projectId    String?
+  teamId       String?
+  teamMemberId String?
+  status       ExpenseStatus @default(PAID)
+  project      Project?      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  team         Team?         @relation(fields: [teamId], references: [id])
+  teamMember   TeamMember?   @relation(fields: [teamMemberId], references: [id])
+  workspace    Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   @@index([workspaceId])
+  @@index([teamId])
+  @@index([teamMemberId])
 }
 
 model Reminder {
@@ -482,4 +485,9 @@ enum TaskPriority {
 enum PaymentType {
   INCOMING
   OUTGOING
+}
+
+enum ExpenseStatus {
+  PAID
+  PENDING
 }

@@ -39,7 +39,10 @@ export const RevenueChart = ({ data }: RevenueChartProps) => {
                     />
                     <Tooltip
                         contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
-                        formatter={(value: number | undefined, name: string | number | undefined) => [`$${value || 0}`, name === "revenue" ? "Revenue" : "Expenses"]}
+                        formatter={(value: number | undefined, name: string | number | undefined) => [
+                            `$${value?.toLocaleString() || 0}`, 
+                            String(name).toLowerCase() === "revenue" ? "Revenue" : "Expenses"
+                        ]}
                     />
                     <Line
                         type="monotone"

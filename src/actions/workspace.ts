@@ -163,3 +163,28 @@ export const getWorkspaceById = async (workspaceId: string) => {
     }
 };
 
+export const deleteWorkspace = async (workspaceId: string) => {
+    const user = await currentUser();
+    if (!user?.id) return { error: "Unauthorized" };
+
+    const workspace = await prisma.workspace.findUnique({
+        where: { id: workspaceId },
+        select: { ownerId: true }
+    });
+
+    if (!workspace) return { error: "Workspace not found" };
+    if (workspace.ownerId !== user.id) return { error: "Only the workspace owner can delete it" };
+
+    try {
+        await prisma.workspace.delete({
+            where: { id: workspaceId }
+        });
+
+        revalidatePath("/workspaces");
+        return { success: "Workspace deleted successfully" };
+    } catch (error) {
+        console.error(error);
+        return { error: "Failed to delete workspace" };
+    }
+};
+

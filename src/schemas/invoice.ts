@@ -9,7 +9,6 @@ export const InvoiceItemSchema = z.object({
 export const CreateInvoiceSchema = z.object({
     projectId: z.string().optional(),
     contractorId: z.string().optional(),
-    teamId: z.string().optional(),
     customerId: z.string().optional(), // If external
     recipientName: z.string().min(1, "Recipient name is required"),
     recipientEmail: z.string().email("Invalid email address"),

@@ -146,7 +146,6 @@ export const createInvoice = async (
     const {
         projectId,
         contractorId,
-        teamId,
         dueDate,
         items,
         taxRate,
@@ -166,7 +165,6 @@ export const createInvoice = async (
                 workspaceId,
                 projectId: projectId || null,
                 contractorId: contractorId || null,
-                teamId: teamId || null,
                 number: `INV-${Date.now()}`, // Simple generator
                 dueDate,
                 totalAmount,
@@ -309,7 +307,6 @@ export const recordPayment = async (
                     type: "INCOMING",
                     projectId: invoice.projectId,
                     contractorId: invoice.contractorId,
-                    teamId: invoice.teamId,
                 }
             }),
             prisma.invoice.update({
@@ -371,7 +368,6 @@ export const updateInvoiceStatus = async (
                     method: "Manual",
                     projectId: existingInvoice.projectId,
                     contractorId: existingInvoice.contractorId,
-                    teamId: existingInvoice.teamId,
                     reference: `Full payment for ${invoice.number}`
                 }
             });

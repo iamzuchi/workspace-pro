@@ -252,15 +252,15 @@ export const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoice }) => {
                 <View style={styles.totals}>
                     <View style={styles.totalRow}>
                         <Text style={styles.totalLabel}>Subtotal</Text>
-                        <Text style={styles.totalValue}>{formatCurrency(invoice.totalAmount, currency)}</Text>
+                        <Text style={styles.totalValue}>{formatCurrency(Number(invoice.totalAmount) - Number(invoice.taxAmount), currency)}</Text>
                     </View>
                     <View style={styles.totalRow}>
-                        <Text style={styles.totalLabel}>Tax</Text>
+                        <Text style={styles.totalLabel}>VAT / Tax</Text>
                         <Text style={styles.totalValue}>{formatCurrency(invoice.taxAmount, currency)}</Text>
                     </View>
                     <View style={[styles.totalRow, styles.grandTotal]}>
                         <Text style={styles.totalLabel}>Total</Text>
-                        <Text style={styles.totalValue}>{formatCurrency((Number(invoice.totalAmount) + Number(invoice.taxAmount)), currency)}</Text>
+                        <Text style={styles.totalValue}>{formatCurrency(invoice.totalAmount, currency)}</Text>
                     </View>
                 </View>
 

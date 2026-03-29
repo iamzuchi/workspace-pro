@@ -146,16 +146,11 @@ export const getTeams = async (workspaceId: string) => {
     try {
         // @ts-ignore
         const teams = await prisma.team.findMany({
-
             where: { workspaceId },
             include: {
                 members: true,
                 project: true,
-                invoices: {
-                    include: {
-                        payments: true
-                    }
-                }
+                expenses: true,
             },
             orderBy: {
                 createdAt: "desc"
@@ -166,13 +161,13 @@ export const getTeams = async (workspaceId: string) => {
         const teamsWithMetrics = teams.map((team: any) => {
             const totalProjects = team.projectId ? 1 : 0;
 
-            const totalPaid = team.invoices.reduce((acc: number, inv: any) => {
-                const paid = inv.payments.reduce((pAcc: number, p: any) => pAcc + Number(p.amount), 0);
-                return acc + paid;
-            }, 0);
+            const totalPaid = team.expenses
+                .filter((ex: any) => ex.status === "PAID")
+                .reduce((acc: number, ex: any) => acc + Number(ex.amount), 0);
 
-            const totalAmount = team.invoices.reduce((acc: number, inv: any) => acc + Number(inv.totalAmount), 0);
-            const amountPending = totalAmount - totalPaid;
+            const amountPending = team.expenses
+                .filter((ex: any) => ex.status === "PENDING")
+                .reduce((acc: number, ex: any) => acc + Number(ex.amount), 0);
 
             return {
                 ...team,

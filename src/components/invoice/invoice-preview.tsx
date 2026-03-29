@@ -135,7 +135,7 @@ export const InvoicePreview = ({ workspace, invoice }: InvoicePreviewProps) => {
                         <span>{currencyFormatter.format(subtotal)}</span>
                     </div>
                     <div className="flex justify-between text-zinc-500">
-                        <span>Tax ({((Number(invoice.taxAmount) / subtotal) * 100).toFixed(0)}%)</span>
+                        <span>VAT / Tax</span>
                         <span>{currencyFormatter.format(Number(invoice.taxAmount))}</span>
                     </div>
                     <div className="flex justify-between pt-3 border-t border-zinc-200">

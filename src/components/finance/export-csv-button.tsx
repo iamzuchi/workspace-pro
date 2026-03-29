@@ -7,7 +7,7 @@ import { format } from "date-fns";
 interface ExportCsvButtonProps {
     data: any[];
     filename: string;
-    type: "INVOICE" | "WORKSPACE";
+    type: "INVOICE" | "WORKSPACE" | "EXPENSE";
 }
 
 export const ExportCsvButton = ({ data, filename, type }: ExportCsvButtonProps) => {
@@ -20,15 +20,27 @@ export const ExportCsvButton = ({ data, filename, type }: ExportCsvButtonProps) 
             rows = data.map(inv => {
                 const paid = inv.payments?.reduce((acc: number, p: any) => acc + Number(p.amount), 0) || 0;
                 return [
-                    `"${inv.number}"`,
-                    inv.status,
-                    Number(inv.totalAmount).toString(),
+                    `"${inv?.number || ""}"`,
+                    inv?.status || "",
+                    Number(inv?.totalAmount || 0).toString(),
                     paid.toString(),
                     inv.dueDate ? format(new Date(inv.dueDate), "MMM d, yyyy") : "",
                     `"${inv.project?.name || ""}"`,
                     `"${inv.team?.name || ""}"`
                 ];
             });
+        } else if (type === "EXPENSE") {
+            headers = ["Date", "Title", "Category", "Amount", "Status", "Project", "Team", "Team Member"];
+            rows = data.map(exp => [
+                format(new Date(exp.date), "MMM d, yyyy"),
+                `"${exp.title}"`,
+                `"${exp.category}"`,
+                Number(exp.amount).toString(),
+                exp.status || "PAID",
+                `"${exp.project?.name || ""}"`,
+                `"${exp.team?.name || ""}"`,
+                `"${exp.teamMember?.name || ""}"`
+            ]);
         }
 
         const csvContent = "data:text/csv;charset=utf-8," 

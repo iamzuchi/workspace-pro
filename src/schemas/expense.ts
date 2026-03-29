@@ -7,4 +7,7 @@ export const CreateExpenseSchema = z.object({
     date: z.date(),
     receiptUrl: z.string().optional(),
     projectId: z.string().optional(),
+    teamId: z.string().optional(),
+    teamMemberId: z.string().optional(),
+    status: z.enum(["PAID", "PENDING"]).default("PAID"),
 });

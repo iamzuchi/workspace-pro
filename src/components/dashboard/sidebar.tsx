@@ -105,6 +105,17 @@ export const Sidebar = ({ workspaces, currentWorkspace }: SidebarProps) => {
                     ))}
                 </div>
             </div>
+            <div className="mt-auto px-3 py-4 border-t border-white/10">
+                <Link
+                    href="/workspaces"
+                    className="text-sm group flex p-3 w-full justify-start font-medium cursor-pointer text-zinc-400 hover:text-white hover:bg-white/10 rounded-lg transition"
+                >
+                    <div className="flex items-center flex-1 text-sky-400">
+                        <Building2 className="h-5 w-5 mr-3" />
+                        All Workspaces
+                    </div>
+                </Link>
+            </div>
         </div>
     );
 };
