@@ -27,7 +27,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CreateInvoiceSchema } from "@/schemas/invoice";
 import { createInvoice, updateInvoice } from "@/actions/invoice";
 import { Textarea } from "@/components/ui/textarea";
-import { TeamSelectField } from "@/components/invoice/team-select-field";
 import { CurrencySelect } from "@/components/invoice/currency-select";
 
 
@@ -49,7 +48,6 @@ export const InvoiceForm = ({ initialData, invoiceId }: InvoiceFormProps) => {
         defaultValues: {
             projectId: initialData?.projectId || queryProjectId || "",
             contractorId: initialData?.contractorId || "",
-            teamId: initialData?.teamId || "",
             recipientName: initialData?.recipientName || "",
             recipientEmail: initialData?.recipientEmail || "",
             notes: initialData?.notes || "",
@@ -149,7 +147,6 @@ export const InvoiceForm = ({ initialData, invoiceId }: InvoiceFormProps) => {
                             <CardTitle>Invoice settings</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <TeamSelectField control={form.control} disabled={isPending} />
                             <FormField
                                 control={form.control}
                                 name="currency"
