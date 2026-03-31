@@ -18,7 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Upload, Building2, X } from "lucide-react";
-import { useState, useTransition, useRef } from "react";
+import { useState, useTransition, useRef, useEffect } from "react";
 import {
     Select,
     SelectContent,
@@ -63,6 +63,11 @@ export const WorkspaceSettingsForm = ({ workspace }: WorkspaceSettingsFormProps)
     const [isDeleting, setIsDeleting] = useState(false);
     const router = useRouter();
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Sync state with props when workspace changes (e.g. after revalidation)
+    useEffect(() => {
+        setLogoPreview(workspace.logo);
+    }, [workspace.id, workspace.logo]);
 
     const form = useForm<any>({
         resolver: zodResolver(UpdateWorkspaceSchema),
@@ -144,15 +149,14 @@ export const WorkspaceSettingsForm = ({ workspace }: WorkspaceSettingsFormProps)
                         <div className="relative h-24 w-24 rounded-lg overflow-hidden bg-zinc-100 flex items-center justify-center border-2 border-dashed border-zinc-300">
                             {logoPreview ? (
                                 <>
-                                    <Image
+                                    <img
                                         src={logoPreview}
                                         alt="Workspace logo"
-                                        fill
-                                        className="object-cover"
+                                        className="h-full w-full object-cover"
                                     />
                                     <button
                                         onClick={removeLogo}
-                                        className="absolute top-1 right-1 h-6 w-6 rounded-full bg-rose-500 text-white flex items-center justify-center hover:bg-rose-600 transition"
+                                        className="absolute top-1 right-1 h-6 w-6 rounded-full bg-rose-500 text-white flex items-center justify-center hover:bg-rose-600 transition z-10"
                                         type="button"
                                     >
                                         <X className="h-4 w-4" />
@@ -176,7 +180,6 @@ export const WorkspaceSettingsForm = ({ workspace }: WorkspaceSettingsFormProps)
                                     type="button"
                                     variant="outline"
                                     disabled={isUploadingLogo}
-                                    onClick={() => fileInputRef.current?.click()}
                                     asChild
                                 >
                                     <span>

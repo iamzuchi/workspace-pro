@@ -75,11 +75,10 @@ export const Sidebar = ({ workspaces, currentWorkspace }: SidebarProps) => {
                 {currentWorkspace?.logo && (
                     <div className="mb-4 flex items-center justify-center">
                         <div className="relative h-16 w-16 rounded-lg overflow-hidden bg-zinc-800">
-                            <Image
+                            <img
                                 src={currentWorkspace.logo}
                                 alt={currentWorkspace.name}
-                                fill
-                                className="object-cover"
+                                className="h-full w-full object-cover"
                             />
                         </div>
                     </div>

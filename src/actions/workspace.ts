@@ -68,10 +68,11 @@ export const updateWorkspace = async (
         });
 
         revalidatePath(`/${workspaceId}`);
+        revalidatePath(`/${workspaceId}/settings`);
         revalidatePath(`/workspaces`);
         return { success: "Workspace updated successfully" };
     } catch (error) {
-        console.error(error);
+        console.error("[UPDATE_WORKSPACE_ERROR]", error);
         return { error: "Failed to update workspace" };
     }
 };
@@ -126,10 +127,12 @@ export const uploadWorkspaceLogo = async (
         });
 
         revalidatePath(`/${workspaceId}`);
+        revalidatePath(`/${workspaceId}/settings`);
         revalidatePath(`/workspaces`);
+        
         return { success: "Logo uploaded successfully", logoPath };
     } catch (error) {
-        console.error(error);
+        console.error("[UPLOAD_LOGO_ERROR]", error);
         return { error: "Failed to upload logo" };
     }
 };
