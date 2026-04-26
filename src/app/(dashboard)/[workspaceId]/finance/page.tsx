@@ -118,15 +118,15 @@ const FinancePage = async ({ params }: { params: Promise<{ workspaceId: string }
     });
 
     return (
-        <div className="flex-1 space-y-4 p-8 pt-6">
-            <div className="flex items-center justify-between space-y-2">
+        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-y-4">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight">Finance Dashboard</h2>
-                    <p className="text-muted-foreground">Manage your invoices, payments, expenses, and financial reports.</p>
+                    <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Finance Dashboard</h2>
+                    <p className="text-sm text-muted-foreground">Manage your invoices, payments, expenses, and financial reports.</p>
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center flex-wrap gap-2 w-full sm:w-auto">
                     <CreateExpenseModal teams={teams} members={members} />
-                    <Button asChild>
+                    <Button asChild className="w-full sm:w-auto">
                         <Link href={`/${workspaceId}/finance/create`}>
                             <Plus className="mr-2 h-4 w-4" /> Create Invoice
                         </Link>
@@ -211,7 +211,7 @@ const FinancePage = async ({ params }: { params: Promise<{ workspaceId: string }
                         <h3 className="text-lg font-medium">Invoices</h3>
                         <ExportCsvButton data={serializedInvoices} filename={`invoices-${workspaceId}`} type="INVOICE" />
                     </div>
-                    <div className="rounded-md border bg-white">
+                    <div className="rounded-md border bg-white overflow-x-auto">
                         <Table>
                             <TableHeader>
                                 <TableRow>
@@ -274,7 +274,7 @@ const FinancePage = async ({ params }: { params: Promise<{ workspaceId: string }
                         <h3 className="text-lg font-medium">Recent Payments</h3>
                         <ExportCsvButton data={serializedPayments} filename={`payments-${workspaceId}`} type="INVOICE" /> 
                     </div>
-                    <div className="rounded-md border bg-white">
+                    <div className="rounded-md border bg-white overflow-x-auto">
                         <Table>
                             <TableHeader>
                                 <TableRow>

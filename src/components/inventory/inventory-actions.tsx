@@ -23,9 +23,10 @@ interface InventoryActionsProps {
     workspaceId: string;
     item: any;
     projects: any[];
+    workSites: any[];
 }
 
-export const InventoryActions = ({ workspaceId, item, projects }: InventoryActionsProps) => {
+export const InventoryActions = ({ workspaceId, item, projects, workSites }: InventoryActionsProps) => {
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
     const [isAllocationOpen, setIsAllocationOpen] = useState(false);
@@ -61,6 +62,7 @@ export const InventoryActions = ({ workspaceId, item, projects }: InventoryActio
                 onClose={() => setIsEditOpen(false)}
                 workspaceId={workspaceId}
                 item={item}
+                workSites={workSites}
             />
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>

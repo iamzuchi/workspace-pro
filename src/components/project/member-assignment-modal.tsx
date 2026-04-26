@@ -29,48 +29,47 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { PlusCircle } from "lucide-react";
-import { allocateToProject } from "@/actions/inventory";
+import { UserPlus } from "lucide-react";
+import { assignToMember } from "@/actions/inventory";
 import { toast } from "sonner";
-import { AllocateToProjectSchema } from "@/schemas/inventory";
+import { AssignToMemberSchema } from "@/schemas/inventory";
 
-interface AllocateInventoryModalProps {
+interface MemberAssignmentModalProps {
     workspaceId: string;
     projectId: string;
-    items: {
-        id: string;
-        name: string;
-        quantity: number;
-    }[];
+    projectStock: any[];
+    teamMembers: any[];
 }
 
-export const AllocateInventoryModal = ({
+export const MemberAssignmentModal = ({
     workspaceId,
     projectId,
-    items,
-}: AllocateInventoryModalProps) => {
+    projectStock,
+    teamMembers,
+}: MemberAssignmentModalProps) => {
     const [isPending, startTransition] = useTransition();
     const router = useRouter();
     const [open, setOpen] = useState(false);
 
-    const form = useForm<z.infer<typeof AllocateToProjectSchema>>({
-        resolver: zodResolver(AllocateToProjectSchema) as any,
+    const form = useForm<z.infer<typeof AssignToMemberSchema>>({
+        resolver: zodResolver(AssignToMemberSchema) as any,
         defaultValues: {
             projectId: projectId,
+            teamMemberId: "",
             quantity: 1,
             notes: "",
         },
     });
 
-    const onSubmit = (values: z.infer<typeof AllocateToProjectSchema>) => {
-        const itemId = form.getValues("itemId" as any);
-        if (!itemId) {
-            toast.error("Please select an item");
+    const onSubmit = (values: z.infer<typeof AssignToMemberSchema>) => {
+        const projectInventoryId = form.getValues("projectInventoryId" as any);
+        if (!projectInventoryId) {
+            toast.error("Please select an item from stock");
             return;
         }
 
         startTransition(() => {
-            allocateToProject(workspaceId, itemId, values).then((data) => {
+            assignToMember(workspaceId, projectInventoryId, values).then((data) => {
                 if (data?.error) {
                     toast.error(data.error);
                 }
@@ -87,23 +86,23 @@ export const AllocateInventoryModal = ({
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button size="sm">
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Allocate to Project Warehouse
+                <Button size="sm" variant="outline">
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    Assign to Team Member
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>Allocate to Project Warehouse</DialogTitle>
+                    <DialogTitle>Assign Material to Member</DialogTitle>
                 </DialogHeader>
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                         <FormField
                             control={form.control}
-                            name={"itemId" as any}
+                            name={"projectInventoryId" as any}
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Item from General Stock</FormLabel>
+                                    <FormLabel>Item from Project stock</FormLabel>
                                     <Select
                                         disabled={isPending}
                                         onValueChange={field.onChange}
@@ -111,18 +110,46 @@ export const AllocateInventoryModal = ({
                                     >
                                         <FormControl>
                                             <SelectTrigger>
-                                                <SelectValue placeholder="Select an item" />
+                                                <SelectValue placeholder="Select stock item" />
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                            {items.map((item) => (
-                                                <SelectItem key={item.id} value={item.id} className="py-3">
+                                            {projectStock.map((stock) => (
+                                                <SelectItem key={stock.id} value={stock.id} className="py-3">
                                                     <div className="flex flex-col items-start gap-1">
-                                                        <span className="font-semibold text-sm">{item.name}</span>
+                                                        <span className="font-semibold text-sm">{stock.item.name}</span>
                                                         <span className="text-xs text-muted-foreground">
-                                                            General Stock: {item.quantity} units
+                                                            Project Stock: {stock.quantity} units
                                                         </span>
                                                     </div>
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="teamMemberId"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Team Member (Responsible)</FormLabel>
+                                    <Select
+                                        disabled={isPending}
+                                        onValueChange={field.onChange}
+                                        defaultValue={field.value}
+                                    >
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select team member" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {teamMembers.map((member) => (
+                                                <SelectItem key={member.id} value={member.id}>
+                                                    {member.name} ({member.occupation || "Member"})
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>
@@ -136,30 +163,12 @@ export const AllocateInventoryModal = ({
                             name="quantity"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Quantity to Allocate</FormLabel>
+                                    <FormLabel>Quantity to Assign</FormLabel>
                                     <FormControl>
                                         <Input
                                             {...field}
                                             disabled={isPending}
                                             type="number"
-                                            placeholder="Enter quantity"
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                         <FormField
-                            control={form.control}
-                            name="notes"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Notes</FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            {...field}
-                                            disabled={isPending}
-                                            placeholder="e.g. For Phase 1 foundations"
                                         />
                                     </FormControl>
                                     <FormMessage />
@@ -168,12 +177,7 @@ export const AllocateInventoryModal = ({
                         />
                         <div className="flex justify-end gap-2 pt-4">
                             <Button variant="outline" onClick={() => setOpen(false)} disabled={isPending}>Cancel</Button>
-                            <Button
-                                disabled={isPending}
-                                type="submit"
-                            >
-                                Allocate
-                            </Button>
+                            <Button disabled={isPending} type="submit">Assign</Button>
                         </div>
                     </form>
                 </Form>

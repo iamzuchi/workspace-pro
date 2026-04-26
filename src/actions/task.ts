@@ -288,3 +288,39 @@ export const deleteTaskComment = async (workspaceId: string, projectId: string, 
         return { error: "Failed to delete comment" };
     }
 };
+
+export const searchTasks = async (workspaceId: string, query: string) => {
+    const user = await currentUser();
+    if (!user) return [];
+
+    if (!query || query.length < 2) return [];
+
+    try {
+        const tasks = await prisma.task.findMany({
+            where: {
+                workspaceId,
+                OR: [
+                    { title: { contains: query, mode: 'insensitive' } },
+                    { description: { contains: query, mode: 'insensitive' } }
+                ]
+            },
+            include: {
+                project: {
+                    select: {
+                        name: true,
+                        id: true,
+                    }
+                }
+            },
+            take: 10,
+            orderBy: {
+                updatedAt: 'desc'
+            }
+        });
+
+        return tasks;
+    } catch (error) {
+        console.error("Search tasks error:", error);
+        return [];
+    }
+}

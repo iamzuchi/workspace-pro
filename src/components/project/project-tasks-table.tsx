@@ -159,8 +159,8 @@ export const ProjectTasksTable = ({
 
     return (
         <div className="space-y-4">
-            <div className="flex items-center justify-between">
-                <div className="relative w-full max-w-sm">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="relative w-full sm:max-w-sm">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-zinc-500" />
                     <Input
                         placeholder="Search tasks by title..."
@@ -197,12 +197,12 @@ export const ProjectTasksTable = ({
                     </Button>
                 </div>
             </div>
-            <div className="flex flex-col sm:flex-row items-center gap-4 mb-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 mb-4 bg-zinc-50/50 p-3 rounded-lg border">
                 <div className="flex items-center gap-x-2 text-zinc-500">
                     <Filter className="h-4 w-4" />
-                    <span className="text-sm font-medium">Filters:</span>
+                    <span className="text-xs font-bold uppercase tracking-wider">Filters</span>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap items-center gap-2 w-full">
                     <Select value={statusFilter} onValueChange={setStatusFilter}>
                         <SelectTrigger className="w-[140px]">
                             <SelectValue placeholder="Status" />

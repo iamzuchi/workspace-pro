@@ -26,10 +26,11 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { updateWorkspace, uploadWorkspaceLogo, deleteWorkspace } from "@/actions/workspace";
+import { updateWorkspace, updateWorkspaceLogo, deleteWorkspace } from "@/actions/workspace";
 import { CURRENCY_OPTIONS } from "@/lib/currency";
 import { toast } from "sonner";
 import Image from "next/image";
+import { CldUploadWidget } from "next-cloudinary";
 import { AlertTriangle, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
@@ -62,7 +63,6 @@ export const WorkspaceSettingsForm = ({ workspace }: WorkspaceSettingsFormProps)
     const [isUploadingLogo, setIsUploadingLogo] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const router = useRouter();
-    const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Sync state with props when workspace changes (e.g. after revalidation)
     useEffect(() => {
@@ -92,49 +92,46 @@ export const WorkspaceSettingsForm = ({ workspace }: WorkspaceSettingsFormProps)
         });
     };
 
-    const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
+    const onUploadSuccess = (result: any) => {
+        const info = result.info;
+        const logoUrl = info.secure_url;
 
-        // Client-side validation for file size (1MB)
-        if (file.size > 1024 * 1024) {
-            toast.error("Image size must be less than 1MB");
-            return;
-        }
-
-        // Show preview
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            setLogoPreview(reader.result as string);
-        };
-        reader.readAsDataURL(file);
-
-        // Upload to server
         setIsUploadingLogo(true);
-        const formData = new FormData();
-        formData.append("logo", file);
+        setLogoPreview(logoUrl);
 
-        try {
-            const result = await uploadWorkspaceLogo(workspace.id, formData);
-            if (result.success) {
-                toast.success(result.success);
-            } else if (result.error) {
-                toast.error(result.error);
-                setLogoPreview(workspace.logo); // Revert preview
-            }
-        } catch (error) {
-            toast.error("Failed to upload logo");
-            setLogoPreview(workspace.logo);
-        } finally {
-            setIsUploadingLogo(false);
-        }
+        startTransition(() => {
+            updateWorkspaceLogo(workspace.id, logoUrl).then((data) => {
+                if (data.success) {
+                    toast.success(data.success);
+                } else if (data.error) {
+                    toast.error(data.error);
+                    setLogoPreview(workspace.logo);
+                }
+                setIsUploadingLogo(false);
+            }).catch(() => {
+                toast.error("Failed to update logo");
+                setLogoPreview(workspace.logo);
+                setIsUploadingLogo(false);
+            });
+        });
     };
 
     const removeLogo = () => {
-        setLogoPreview(null);
-        if (fileInputRef.current) {
-            fileInputRef.current.value = "";
-        }
+        setIsUploadingLogo(true);
+        startTransition(() => {
+            updateWorkspaceLogo(workspace.id, null).then((data) => {
+                if (data.success) {
+                    toast.success("Logo removed");
+                    setLogoPreview(null);
+                } else if (data.error) {
+                    toast.error(data.error);
+                }
+                setIsUploadingLogo(false);
+            }).catch(() => {
+                toast.error("Failed to remove logo");
+                setIsUploadingLogo(false);
+            });
+        });
     };
 
     return (
@@ -167,29 +164,27 @@ export const WorkspaceSettingsForm = ({ workspace }: WorkspaceSettingsFormProps)
                             )}
                         </div>
                         <div className="flex-1">
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                accept="image/jpeg,image/png,image/svg+xml,image/webp"
-                                onChange={handleLogoUpload}
-                                className="hidden"
-                                id="logo-upload"
-                            />
-                            <label htmlFor="logo-upload">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    disabled={isUploadingLogo}
-                                    asChild
-                                >
-                                    <span>
+                            <CldUploadWidget
+                                onSuccess={onUploadSuccess}
+                                uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "workspace_pro"}
+                            >
+                                {({ open }) => (
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        disabled={isUploadingLogo}
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            open();
+                                        }}
+                                    >
                                         <Upload className="h-4 w-4 mr-2" />
                                         {isUploadingLogo ? "Uploading..." : "Upload Logo"}
-                                    </span>
-                                </Button>
-                            </label>
+                                    </Button>
+                                )}
+                            </CldUploadWidget>
                             <p className="text-xs text-muted-foreground mt-2">
-                                JPG, PNG, SVG, or WebP. Max 2MB.
+                                Upload JPG, PNG, SVG, or WebP.
                             </p>
                         </div>
                     </div>

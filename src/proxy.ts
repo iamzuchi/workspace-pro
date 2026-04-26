@@ -66,6 +66,6 @@ export default auth(async (req) => {
 })
 
 export const config = {
-    // Matcher updated to include /api routes for rate limiting, but exclude static assets
-    matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+    // Matcher updated to include /api routes for rate limiting, but exclude static assets and images
+    matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
 }

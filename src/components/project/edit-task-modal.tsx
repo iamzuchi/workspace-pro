@@ -35,7 +35,9 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { updateTask } from "@/actions/task";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, Info, MessageSquare, Package } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TaskMaterialSection } from "./task-material-section";
 
 const TaskSchema = z.object({
     title: z.string().min(1, "Title is required"),
@@ -136,194 +138,227 @@ export const EditTaskModal = ({
                         Make changes to the task details here.
                     </DialogDescription>
                 </DialogHeader>
-                <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                        <FormField
-                            control={form.control}
-                            name="title"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Title</FormLabel>
-                                    <FormControl>
-                                        <Input {...field} disabled={isPending} placeholder="Task title" />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name="description"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Description</FormLabel>
-                                    <FormControl>
-                                        <Textarea {...field} disabled={isPending} placeholder="Optional description" />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <div className="grid grid-cols-2 gap-4">
-                            <FormField
-                                control={form.control}
-                                name="status"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Status</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <FormControl>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Status" />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                                <SelectItem value="TODO">To Do</SelectItem>
-                                                <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-                                                <SelectItem value="COMPLETED">Completed</SelectItem>
-                                                <SelectItem value="ON_HOLD">On Hold</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="priority"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Priority</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <FormControl>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Priority" />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                                <SelectItem value="LOW">Low</SelectItem>
-                                                <SelectItem value="MEDIUM">Medium</SelectItem>
-                                                <SelectItem value="HIGH">High</SelectItem>
-                                                <SelectItem value="URGENT">Urgent</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
-                        <FormField
-                            control={form.control}
-                            name="assignedUserId"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Assignee</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Select member" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            <SelectItem value="none">None</SelectItem>
-                                            {members.map((member) => (
-                                                <SelectItem key={member.id} value={member.id}>
-                                                    {member.name || "Unnamed User"}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <div className="grid grid-cols-2 gap-4">
-                            <FormField
-                                control={form.control}
-                                name="teamMemberId"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Team Member</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <FormControl>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Select team member" />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                                <SelectItem value="none">None</SelectItem>
-                                                {projectTeams.map((team) => (
-                                                    <div key={team.id}>
-                                                        <div className="px-2 py-1.5 text-xs font-semibold text-zinc-500 uppercase bg-zinc-50">{team.name}</div>
-                                                        {team.members?.map((tm) => (
-                                                            <SelectItem key={tm.id} value={tm.id} className="pl-6">
-                                                                {tm.name}
-                                                            </SelectItem>
-                                                        ))}
-                                                    </div>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="dueDate"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Due Date</FormLabel>
-                                        <FormControl>
-                                            <Input {...field} type="date" disabled={isPending} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
-                        <FormField
-                            control={form.control}
-                            name="isPaid"
-                            render={({ field }) => (
-                                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-zinc-50/50">
-                                    <FormControl>
-                                        <Checkbox
-                                            checked={field.value}
-                                            onCheckedChange={field.onChange}
-                                            disabled={isPending}
-                                        />
-                                    </FormControl>
-                                    <div className="space-y-1 leading-none">
-                                        <FormLabel>
-                                            Mark as Paid
-                                        </FormLabel>
-                                        <p className="text-xs text-muted-foreground">
-                                            Indicate if this task has been paid for.
-                                        </p>
-                                    </div>
-                                </FormItem>
-                            )}
-                        />
-                        <Button disabled={isPending} type="submit" className="w-full">
-                            {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Save Changes
-                        </Button>
-                    </form>
-                </Form>
+                <Tabs defaultValue="details" className="w-full">
+                    <TabsList className="grid w-full grid-cols-3 mb-4">
+                        <TabsTrigger value="details" className="gap-2">
+                            <Info className="h-4 w-4" />
+                            Details
+                        </TabsTrigger>
+                        <TabsTrigger value="materials" className="gap-2">
+                            <Package className="h-4 w-4" />
+                            Materials
+                        </TabsTrigger>
+                        <TabsTrigger value="comments" className="gap-2">
+                            <MessageSquare className="h-4 w-4" />
+                            Comments
+                        </TabsTrigger>
+                    </TabsList>
 
-                {task && (
-                    <>
-                        <Separator className="my-6" />
-                        <TaskComments
-                            workspaceId={workspaceId}
-                            projectId={projectId}
-                            taskId={task.id}
-                            currentUserId={currentUserId}
-                            initialComments={task.comments || []}
-                        />
-                    </>
-                )}
+                    <TabsContent value="details">
+                        <Form {...form}>
+                            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                                <FormField
+                                    control={form.control}
+                                    name="title"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Title</FormLabel>
+                                            <FormControl>
+                                                <Input {...field} disabled={isPending} placeholder="Task title" />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="description"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Description</FormLabel>
+                                            <FormControl>
+                                                <Textarea {...field} disabled={isPending} placeholder="Optional description" />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <div className="grid grid-cols-2 gap-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="status"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Status</FormLabel>
+                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Status" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        <SelectItem value="TODO">To Do</SelectItem>
+                                                        <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+                                                        <SelectItem value="COMPLETED">Completed</SelectItem>
+                                                        <SelectItem value="ON_HOLD">On Hold</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="priority"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Priority</FormLabel>
+                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Priority" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        <SelectItem value="LOW">Low</SelectItem>
+                                                        <SelectItem value="MEDIUM">Medium</SelectItem>
+                                                        <SelectItem value="HIGH">High</SelectItem>
+                                                        <SelectItem value="URGENT">Urgent</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                                <FormField
+                                    control={form.control}
+                                    name="assignedUserId"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Assignee</FormLabel>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Select member" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    <SelectItem value="none">None</SelectItem>
+                                                    {members.map((member) => (
+                                                        <SelectItem key={member.id} value={member.id}>
+                                                            {member.name || "Unnamed User"}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <div className="grid grid-cols-2 gap-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="teamMemberId"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Team Member</FormLabel>
+                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Select team member" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        <SelectItem value="none">None</SelectItem>
+                                                        {projectTeams.map((team) => (
+                                                            <div key={team.id}>
+                                                                <div className="px-2 py-1.5 text-xs font-semibold text-zinc-500 uppercase bg-zinc-50">{team.name}</div>
+                                                                {team.members?.map((tm) => (
+                                                                    <SelectItem key={tm.id} value={tm.id} className="pl-6">
+                                                                        {tm.name}
+                                                                    </SelectItem>
+                                                                ))}
+                                                            </div>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="dueDate"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Due Date</FormLabel>
+                                                <FormControl>
+                                                    <Input {...field} type="date" disabled={isPending} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                                <FormField
+                                    control={form.control}
+                                    name="isPaid"
+                                    render={({ field }) => (
+                                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-zinc-50/50">
+                                            <FormControl>
+                                                <Checkbox
+                                                    checked={field.value}
+                                                    onCheckedChange={field.onChange}
+                                                    disabled={isPending}
+                                                />
+                                            </FormControl>
+                                            <div className="space-y-1 leading-none">
+                                                <FormLabel>
+                                                    Mark as Paid
+                                                </FormLabel>
+                                                <p className="text-xs text-muted-foreground">
+                                                    Indicate if this task has been paid for.
+                                                </p>
+                                            </div>
+                                        </FormItem>
+                                    )}
+                                />
+                                <Button disabled={isPending} type="submit" className="w-full">
+                                    {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                    Save Changes
+                                </Button>
+                            </form>
+                        </Form>
+                    </TabsContent>
+
+                    <TabsContent value="materials">
+                        {task ? (
+                            <TaskMaterialSection 
+                                workspaceId={workspaceId}
+                                projectId={projectId}
+                                taskId={task.id}
+                                teamMemberId={form.watch("teamMemberId")}
+                            />
+                        ) : (
+                            <div className="p-8 text-center text-zinc-500">
+                                Task details not loaded.
+                            </div>
+                        )}
+                    </TabsContent>
+
+                    <TabsContent value="comments">
+                        {task && (
+                            <TaskComments
+                                workspaceId={workspaceId}
+                                projectId={projectId}
+                                taskId={task.id}
+                                currentUserId={currentUserId}
+                                initialComments={task.comments || []}
+                            />
+                        )}
+                    </TabsContent>
+                </Tabs>
             </DialogContent>
         </Dialog>
     );

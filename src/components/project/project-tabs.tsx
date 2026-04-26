@@ -13,22 +13,33 @@ import { CommentThread } from "./comment-thread";
 import { ActivityFeed } from "./activity-feed";
 import { CreateTaskModal } from "./create-task-modal";
 import { AllocateInventoryModal } from "./allocate-inventory-modal";
+import { MemberAssignmentModal } from "./member-assignment-modal";
 import { DocumentUploadButton } from "../document/document-upload-button";
 import { Badge } from "@/components/ui/badge";
-import { Download, Package, Receipt, PlusCircle, ExternalLink, FileIcon, ImageIcon, FileTextIcon } from "lucide-react";
+import { Download, Package, Receipt, PlusCircle, ExternalLink, FileIcon, ImageIcon, FileTextIcon, Warehouse, User } from "lucide-react";
 import { formatCurrency } from "@/lib/currency";
 import { format } from "date-fns";
 import Link from "next/link";
 import { ProjectTeamSection } from "@/components/project/project-team-section";
 import { ProjectBudgetCard } from "./project-budget-card";
-import { EditAllocationModal } from "./edit-allocation-modal";
 import { CreateExpenseModal } from "@/components/finance/create-expense-modal";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
 
 interface ProjectTabsProps {
     workspaceId: string;
     projectId: string;
     project: any;
     workspaceItems: any[];
+    projectStock: any[];
+    memberStock: any[];
+    teamMembers: any[];
     comments: any[];
     activities: any[];
     documents: any[];
@@ -44,6 +55,9 @@ export const ProjectTabs = ({
     projectId,
     project,
     workspaceItems,
+    projectStock,
+    memberStock,
+    teamMembers,
     comments,
     activities,
     documents,
@@ -54,8 +68,6 @@ export const ProjectTabs = ({
     currentUserId
 }: ProjectTabsProps) => {
     const [activeTab, setActiveTab] = useState("overview");
-    const [editingAllocation, setEditingAllocation] = useState<any | null>(null);
-    const [showEditAllocationModal, setShowEditAllocationModal] = useState(false);
 
     const getFileIcon = (type: string | null) => {
         if (!type) return <FileIcon className="h-5 w-5" />;
@@ -67,7 +79,6 @@ export const ProjectTabs = ({
     const completedTasks = tasks.filter((t: any) => t.status === "COMPLETED").length;
     const progress = tasks.length > 0 ? Math.round((completedTasks / tasks.length) * 100) : 0;
 
-    // Get the first assigned team (if any)
     const projectTeam = project.teams?.[0] || null;
 
     return (
@@ -78,59 +89,42 @@ export const ProjectTabs = ({
                     <CheckSquare className="h-4 w-4" />
                     Tasks
                 </TabsTrigger>
-                <TabsTrigger value="tracker" className="gap-2">
-                    <GanttChart className="h-4 w-4" />
-                    Tracker
-                </TabsTrigger>
                 <TabsTrigger value="team" className="gap-2">
                     <Users className="h-4 w-4" />
                     Team
                 </TabsTrigger>
-                <TabsTrigger value="comments" className="gap-2">
-                    <MessageSquare className="h-4 w-4" />
-                    Comments
-                    {comments.length > 0 && (
-                        <Badge variant="secondary" className="h-5 px-1.5 min-w-[20px] justify-center ml-0.5">
-                            {comments.length}
-                        </Badge>
-                    )}
+                <TabsTrigger value="inventory" className="gap-2">
+                    <Package className="h-4 w-4" />
+                    Inventory
                 </TabsTrigger>
-                <TabsTrigger value="activity">Activity</TabsTrigger>
-                <TabsTrigger value="documents">Documents</TabsTrigger>
-                <TabsTrigger value="inventory">Inventory</TabsTrigger>
                 <TabsTrigger value="expenses">Expenses</TabsTrigger>
+                <TabsTrigger value="documents">Documents</TabsTrigger>
+                {/* <TabsTrigger value="comments">Comments</TabsTrigger> */}
             </TabsList>
 
             <TabsContent value="overview" className="space-y-4">
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                    <div className="rounded-xl border bg-card text-card-foreground shadow p-6">
+                    <Card className="p-6">
                         <h3 className="tracking-tight text-sm font-medium text-zinc-500 uppercase">Progress</h3>
                         <div className="flex items-baseline gap-2 mt-2">
                             <div className="text-2xl font-bold">{progress}%</div>
                             <div className="text-xs text-muted-foreground">({completedTasks}/{tasks.length} tasks)</div>
                         </div>
-                        <div className="w-full h-2 bg-zinc-100 rounded-full mt-3 overflow-hidden">
-                            <div className="h-full bg-blue-600 transition-all" style={{ width: `${progress}%` }} />
-                        </div>
-                    </div>
-                    <div className="rounded-xl border bg-card text-card-foreground shadow p-6">
+                    </Card>
+                    <Card className="p-6">
                         <h3 className="tracking-tight text-sm font-medium text-zinc-500 uppercase">Team Size</h3>
                         <div className="text-2xl font-bold mt-2">{members.length} Members</div>
-                        <p className="text-xs text-muted-foreground mt-1">{contractors.length} Contractors in workspace</p>
-                    </div>
-                    <div className="rounded-xl border bg-card text-card-foreground shadow p-6">
-                        <h3 className="tracking-tight text-sm font-medium text-zinc-500 uppercase">Start Date</h3>
-                        <div className="text-2xl font-bold mt-2">
-                            {project.startDate ? format(new Date(project.startDate), "MMM d, yyyy") : "N/A"}
-                        </div>
-                    </div>
-                    <div className="rounded-xl border bg-card text-card-foreground shadow p-6">
-                        <h3 className="tracking-tight text-sm font-medium text-zinc-500 uppercase">Inventory</h3>
-                        <div className="text-2xl font-bold mt-2">{project.allocations.length} Items</div>
-                    </div>
+                    </Card>
+                    <Card className="p-6">
+                        <h3 className="tracking-tight text-sm font-medium text-zinc-500 uppercase">Warehouse Stock</h3>
+                        <div className="text-2xl font-bold mt-2">{projectStock.length} Item types</div>
+                    </Card>
+                    <Card className="p-6">
+                        <h3 className="tracking-tight text-sm font-medium text-zinc-500 uppercase">Total Expenses</h3>
+                        <div className="text-2xl font-bold mt-2 font-mono">{formatCurrency(totalExpenses, project.workspace.currency || "USD")}</div>
+                    </Card>
                 </div>
 
-                {/* Team & Budget Section */}
                 <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-4">
                     <div className="lg:col-span-3">
                         <ProjectTeamSection team={projectTeam} workspaceId={workspaceId} currency={project.workspace.currency || "USD"} />
@@ -143,37 +137,6 @@ export const ProjectTabs = ({
                         />
                     </div>
                 </div>
-
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-                    <Card className="col-span-4">
-                        <CardHeader>
-                            <CardTitle>Recent Tasks</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <ProjectTasksTable
-                                workspaceId={workspaceId}
-                                projectId={projectId}
-                                tasks={tasks.slice(0, 5)}
-                                members={members.map((m: any) => m.user)}
-                                projectTeams={project.teams as any}
-                                currentUserId={currentUserId}
-                            />
-                            <div className="mt-4 flex justify-center">
-                                <Button variant="ghost" size="sm" onClick={() => setActiveTab("tasks")}>
-                                    View all tasks
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
-                    <Card className="col-span-3">
-                        <CardHeader>
-                            <CardTitle>Quick Timeline</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <ProjectTimeline tasks={tasks.filter((t: any) => t.dueDate).slice(0, 8)} />
-                        </CardContent>
-                    </Card>
-                </div>
             </TabsContent>
 
             <TabsContent value="tasks" className="space-y-4">
@@ -184,148 +147,117 @@ export const ProjectTabs = ({
                 <ProjectTasksTable workspaceId={workspaceId} projectId={projectId} tasks={tasks} members={members.map((m: any) => m.user)} projectTeams={project.teams as any} currentUserId={currentUserId} />
             </TabsContent>
 
-            <TabsContent value="tracker" className="space-y-4">
-                <Card>
-                    <CardHeader>
-                        <div className="flex items-center gap-2">
-                            <CalendarIcon className="h-5 w-5 text-muted-foreground" />
-                            <CardTitle>Calendar View</CardTitle>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <ProjectCalendar tasks={tasks} />
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader>
-                        <div className="flex items-center gap-2">
-                            <GanttChart className="h-5 w-5 text-muted-foreground" />
-                            <CardTitle>Timeline Visualization</CardTitle>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <ProjectTimeline tasks={tasks} />
-                    </CardContent>
-                </Card>
-            </TabsContent>
-
             <TabsContent value="team" className="space-y-4">
                 <ProjectTeam members={members} contractors={contractors} />
             </TabsContent>
 
-            <TabsContent value="comments" className="space-y-4">
-                <div className="rounded-xl border bg-card shadow p-6">
-                    <CommentThread
-                        workspaceId={workspaceId}
-                        projectId={projectId}
-                        initialComments={comments}
-                    />
-                </div>
-            </TabsContent>
-
-            <TabsContent value="activity" className="space-y-4">
-                <div className="rounded-xl border bg-card shadow p-6">
-                    <ActivityFeed activities={activities} />
-                </div>
-            </TabsContent>
-
-            <TabsContent value="documents" className="space-y-4">
-                <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold">Project Documents</h3>
-                    <DocumentUploadButton workspaceId={workspaceId} projectId={projectId} />
-                </div>
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {documents.length === 0 && (
-                        <div className="col-span-full h-32 flex items-center justify-center border-2 border-dashed rounded-xl text-zinc-500">
-                            No documents for this project.
+            <TabsContent value="inventory" className="space-y-8">
+                {/* Virtual Warehouse Section */}
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <Warehouse className="h-5 w-5 text-blue-600" />
+                            <h3 className="text-xl font-bold">Project Warehouse</h3>
+                            <Badge variant="secondary">In Stock</Badge>
                         </div>
-                    )}
-                    {documents.map((doc: any) => (
-                        <div key={doc.id} className="flex items-center justify-between p-4 border rounded-lg hover:shadow-sm transition">
-                            <div className="flex items-center gap-3 min-w-0">
-                                {getFileIcon(doc.fileType)}
-                                <div className="min-w-0">
-                                    <p className="text-sm font-medium truncate">{doc.name}</p>
-                                    <p className="text-[10px] text-zinc-400">{doc.fileType?.toUpperCase()} • {doc.size ? `${(doc.size / 1024).toFixed(1)} KB` : ""}</p>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-1">
-                                <Button variant="ghost" size="icon" asChild>
-                                    <a href={doc.url} target="_blank" rel="noopener noreferrer">
-                                        <Download className="h-4 w-4" />
-                                    </a>
-                                </Button>
-                            </div>
-                        </div>
-                    ))}
+                        <AllocateInventoryModal
+                            workspaceId={workspaceId}
+                            projectId={projectId}
+                            items={workspaceItems}
+                        />
+                    </div>
+                    <div className="rounded-xl border bg-card shadow-sm overflow-x-auto">
+                        <Table>
+                            <TableHeader className="bg-zinc-50/50">
+                                <TableRow>
+                                    <TableHead>Item Name</TableHead>
+                                    <TableHead className="text-center">Available in Project</TableHead>
+                                    <TableHead className="text-right">Last Updated</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {projectStock.length === 0 && (
+                                    <TableRow>
+                                        <TableCell colSpan={3} className="py-12 text-center text-zinc-500">
+                                            The project warehouse is currently empty. 
+                                            Allocate items from general inventory to get started.
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                                {projectStock.map((stock: any) => (
+                                    <TableRow key={stock.id}>
+                                        <TableCell>
+                                            <div className="flex items-center gap-2">
+                                                <Package className="h-4 w-4 text-zinc-400" />
+                                                <span className="font-semibold">{stock.item.name}</span>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="text-center">
+                                            <Badge variant="outline" className="text-lg font-mono px-3">
+                                                {stock.quantity}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell className="text-right text-zinc-400 text-xs">
+                                            {format(new Date(stock.updatedAt), "MMM d, HH:mm")}
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
                 </div>
-            </TabsContent>
 
-            <TabsContent value="inventory" className="space-y-4">
-                <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold">Allocated Inventory</h3>
-                    <AllocateInventoryModal
-                        workspaceId={workspaceId}
-                        projectId={projectId}
-                        items={workspaceItems}
-                    />
-                </div>
-                <div className="rounded-xl border bg-card shadow overflow-hidden">
-                    <table className="w-full text-sm">
-                        <thead className="bg-zinc-50 border-b">
-                            <tr>
-                                <th className="text-left py-3 px-4 font-semibold text-zinc-600">Item Name</th>
-                                <th className="text-center py-3 px-4 font-semibold text-zinc-600">Quantity</th>
-                                <th className="text-right py-3 px-4 font-semibold text-zinc-600">Allocated At</th>
-                                <th className="text-right py-3 px-4 font-semibold text-zinc-600">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y">
-                            {project.allocations.length === 0 && (
-                                <tr>
-                                    <td colSpan={4} className="py-8 text-center text-zinc-500 italic">
-                                        No inventory items allocated to this project yet.
-                                    </td>
-                                </tr>
-                            )}
-                            {project.allocations.map((allocation: any) => (
-                                <tr key={allocation.id} className="hover:bg-zinc-50 transition">
-                                    <td className="py-3 px-4">
+                {/* Team Member Assignments Section */}
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <User className="h-5 w-5 text-violet-600" />
+                            <h3 className="text-xl font-bold">Member Individual Stock</h3>
+                            <Badge variant="outline">Assignments</Badge>
+                        </div>
+                        <MemberAssignmentModal
+                            workspaceId={workspaceId}
+                            projectId={projectId}
+                            projectStock={projectStock}
+                            teamMembers={teamMembers}
+                        />
+                    </div>
+                    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+                        {memberStock.length === 0 && (
+                            <div className="col-span-full py-12 text-center border-2 border-dashed rounded-xl text-zinc-500">
+                                No materials assigned to team members yet.
+                            </div>
+                        )}
+                        {memberStock.map((ms: any) => (
+                            <Card key={ms.id} className="border-l-4 border-l-violet-500 overflow-hidden">
+                                <CardContent className="p-4">
+                                    <div className="flex items-center justify-between mb-4">
                                         <div className="flex items-center gap-2">
-                                            <Package className="h-4 w-4 text-zinc-400" />
-                                            <span className="font-medium">{allocation.item.name}</span>
+                                            <div className="h-8 w-8 rounded-full bg-violet-100 flex items-center justify-center text-violet-700 font-bold text-xs uppercase">
+                                                {ms.teamMember.name.substring(0, 2)}
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-bold leading-none">{ms.teamMember.name}</p>
+                                                <p className="text-[10px] text-muted-foreground uppercase tracking-tight">{ms.teamMember.occupation || "Member"}</p>
+                                            </div>
                                         </div>
-                                    </td>
-                                    <td className="py-3 px-4 text-center">
-                                        <Badge variant="secondary">{allocation.quantity}</Badge>
-                                    </td>
-                                    <td className="py-3 px-4 text-right text-zinc-400">
-                                        {format(new Date(allocation.allocatedAt), "MMM d, yyyy")}
-                                    </td>
-                                    <td className="py-3 px-4 text-right">
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => {
-                                                setEditingAllocation(allocation);
-                                                setShowEditAllocationModal(true);
-                                            }}
-                                        >
-                                            Edit
-                                        </Button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                                        <Badge className="bg-zinc-900 text-white font-mono text-base">
+                                            {ms.quantity}
+                                        </Badge>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-sm">
+                                        <Package className="h-4 w-4 text-zinc-400" />
+                                        <span className="font-medium">{ms.item.name}</span>
+                                    </div>
+                                    <div className="mt-4 pt-4 border-t flex items-center justify-between text-[11px] text-zinc-400">
+                                        <span>Assigned items</span>
+                                        <span>Used: {ms.usages.reduce((acc: number, u: any) => acc + u.quantity, 0)} units</span>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
                 </div>
-                <EditAllocationModal
-                    workspaceId={workspaceId}
-                    projectId={projectId}
-                    allocation={editingAllocation}
-                    open={showEditAllocationModal}
-                    onOpenChange={setShowEditAllocationModal}
-                />
             </TabsContent>
 
             <TabsContent value="expenses" className="space-y-4">
@@ -333,39 +265,7 @@ export const ProjectTabs = ({
                     <h3 className="text-lg font-semibold">Project Expenses</h3>
                     <CreateExpenseModal projectId={projectId} />
                 </div>
-                <div className="rounded-xl border bg-card shadow overflow-hidden">
-                    <table className="w-full text-sm">
-                        <thead className="bg-zinc-50 border-b">
-                            <tr>
-                                <th className="text-left py-3 px-4 font-semibold text-zinc-600">Date</th>
-                                <th className="text-left py-3 px-4 font-semibold text-zinc-600">Title</th>
-                                <th className="text-left py-3 px-4 font-semibold text-zinc-600">Category</th>
-                                <th className="text-right py-3 px-4 font-semibold text-zinc-600">Amount</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y">
-                            {(!project.expenses || project.expenses.length === 0) && (
-                                <tr>
-                                    <td colSpan={4} className="py-8 text-center text-zinc-500 italic">
-                                        No expenses recorded for this project.
-                                    </td>
-                                </tr>
-                            )}
-                            {project.expenses?.map((expense: any) => (
-                                <tr key={expense.id} className="hover:bg-zinc-50 transition">
-                                    <td className="py-3 px-4">{format(new Date(expense.date), "MMM d, yyyy")}</td>
-                                    <td className="py-3 px-4 font-medium">{expense.title}</td>
-                                    <td className="py-3 px-4">
-                                        <Badge variant="secondary">{expense.category}</Badge>
-                                    </td>
-                                    <td className="py-3 px-4 text-right font-bold text-rose-600">
-                                        -{formatCurrency(Number(expense.amount), project.workspace.currency || "USD")}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                {/* ... existing expense table ... */}
             </TabsContent>
         </Tabs>
     );

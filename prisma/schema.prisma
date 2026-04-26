@@ -78,6 +78,8 @@ model Workspace {
   teams       Team[]
   invites     WorkspaceInvite[]
   members     WorkspaceMember[]
+  workSites   WorkSite[]
+  inventoryRecords InventoryRecord[]
 }
 
 model WorkspaceInvite {
@@ -130,6 +132,8 @@ model Project {
   reminders   Reminder[]
   tasks       Task[]
   teams       Team[]
+  inventory   ProjectInventory[]
+  memberInventory TeamMemberInventory[]
 
   @@index([workspaceId])
   @@index([status])
@@ -156,10 +160,90 @@ model InventoryItem {
   image             String?
   createdAt         DateTime              @default(now())
   updatedAt         DateTime              @updatedAt
+  workSiteId        String?
   allocations       InventoryAllocation[]
+  projectInventory  ProjectInventory[]
+  memberInventory   TeamMemberInventory[]
+  inventoryRecords  InventoryRecord[]
+  workSite          WorkSite?             @relation(fields: [workSiteId], references: [id])
   workspace         Workspace             @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   @@index([workspaceId])
+  @@index([workSiteId])
+}
+
+model WorkSite {
+  id          String          @id @default(cuid())
+  workspaceId String
+  name        String
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  items       InventoryItem[]
+  workspace   Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+}
+
+model ProjectInventory {
+  id          String        @id @default(cuid())
+  projectId   String
+  itemId      String
+  quantity    Int           @default(0)
+  updatedAt   DateTime      @updatedAt
+  item        InventoryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  project     Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, itemId])
+}
+
+model TeamMemberInventory {
+  id           String              @id @default(cuid())
+  teamMemberId String
+  projectId    String
+  itemId       String
+  quantity     Int                 @default(0)
+  updatedAt    DateTime            @updatedAt
+  item         InventoryItem       @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  project      Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  teamMember   TeamMember          @relation(fields: [teamMemberId], references: [id], onDelete: Cascade)
+  usages       TaskMaterialUsage[]
+
+  @@unique([teamMemberId, projectId, itemId])
+}
+
+model TaskMaterialUsage {
+  id                    String              @id @default(cuid())
+  taskId                String
+  teamMemberInventoryId String
+  quantity              Int
+  createdAt             DateTime            @default(now())
+  task                  Task                @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  teamMemberInventory   TeamMemberInventory @relation(fields: [teamMemberInventoryId], references: [id], onDelete: Cascade)
+}
+
+model InventoryRecord {
+  id          String              @id @default(cuid())
+  workspaceId String
+  itemId      String
+  type        InventoryRecordType
+  quantity    Int
+  actorId     String // TeamMember ID or User ID
+  actorName   String?
+  notes       String?
+  createdAt   DateTime            @default(now())
+  item        InventoryItem       @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  workspace   Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@index([itemId])
+}
+
+enum InventoryRecordType {
+  STOCK_ADD
+  STOCK_ADJUST
+  PROJECT_ALLOCATE
+  MEMBER_ASSIGN
+  TASK_USE
 }
 
 model InventoryAllocation {
@@ -349,8 +433,9 @@ model Task {
   reminders      Reminder[]
   assignedUser   User?        @relation(fields: [assignedUserId], references: [id])
   project        Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  teamMember     TeamMember?  @relation(fields: [teamMemberId], references: [id])
-  workspace      Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  teamMember     TeamMember?         @relation(fields: [teamMemberId], references: [id])
+  workspace      Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  materialUsages TaskMaterialUsage[]
 
   @@index([workspaceId])
   @@index([projectId])
@@ -387,7 +472,8 @@ model TeamMember {
   updatedAt  DateTime  @updatedAt
   expenses   Expense[]
   tasks      Task[]
-  team       Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  inventory  TeamMemberInventory[]
+  team       Team                  @relation(fields: [teamId], references: [id], onDelete: Cascade)
 
   @@index([teamId])
 }

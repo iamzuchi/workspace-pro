@@ -26,7 +26,7 @@ const TeamPage = async ({
     });
 
     return (
-        <div className="flex-1 space-y-4 p-8 pt-6">
+        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
             <TeamHeader workspaceId={workspaceId} projects={projects} />
             <TeamList teams={teams} workspaceId={workspaceId} projects={projects} currency={workspace?.currency || "USD"} />
         </div>

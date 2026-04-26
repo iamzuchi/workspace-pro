@@ -23,6 +23,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Minus, Plus, ImageIcon, X } from "lucide-react";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 import { CreateInventoryItemSchema } from "@/schemas/inventory";
 import { updateInventoryItem } from "@/actions/inventory";
@@ -33,13 +40,15 @@ interface EditInventoryModalProps {
     onClose: () => void;
     workspaceId: string;
     item: any;
+    workSites: any[];
 }
 
 export const EditInventoryModal = ({
     isOpen,
     onClose,
     workspaceId,
-    item
+    item,
+    workSites = []
 }: EditInventoryModalProps) => {
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
@@ -86,6 +95,7 @@ export const EditInventoryModal = ({
             unitCost: Number(item.unitCost),
             lowStockThreshold: item.lowStockThreshold || 5,
             image: item.image || "",
+            workSiteId: item.workSiteId || "none"
         },
     });
 
@@ -101,13 +111,20 @@ export const EditInventoryModal = ({
                 unitCost: Number(item.unitCost),
                 lowStockThreshold: item.lowStockThreshold || 5,
                 image: item.image || "",
+                workSiteId: item.workSiteId || "none"
             });
         }
-    }, [item, form]);
+    }, [item, form, isOpen]);
 
     const onSubmit = (values: z.infer<typeof CreateInventoryItemSchema>) => {
+        // Handle "none" for workSiteId
+        const activeValues = {
+            ...values,
+            workSiteId: values.workSiteId === "none" ? undefined : values.workSiteId
+        };
+
         startTransition(() => {
-            updateInventoryItem(workspaceId, item.id, values).then((data) => {
+            updateInventoryItem(workspaceId, item.id, activeValues).then((data) => {
                 if (data?.success) {
                     toast.success("Item updated successfully");
                     onClose();
@@ -187,6 +204,36 @@ export const EditInventoryModal = ({
                                     <FormControl>
                                         <Input disabled={isPending} {...field} />
                                     </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="workSiteId"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Work Site (Grouping)</FormLabel>
+                                    <Select 
+                                        disabled={isPending} 
+                                        onValueChange={field.onChange} 
+                                        defaultValue={field.value}
+                                        value={field.value}
+                                    >
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select a work site" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            <SelectItem value="none">General Inventory (No Site)</SelectItem>
+                                            {workSites.map((site: any) => (
+                                                <SelectItem key={site.id} value={site.id}>
+                                                    {site.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                     <FormMessage />
                                 </FormItem>
                             )}

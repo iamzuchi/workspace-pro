@@ -9,6 +9,7 @@ import { ProjectActions } from "@/components/project/project-actions";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { GlobalTaskSearch } from "@/components/projects/global-task-search";
 
 const ProjectsPage = async ({ params }: { params: Promise<{ workspaceId: string }> }) => {
     const { workspaceId } = await params;
@@ -40,6 +41,8 @@ const ProjectsPage = async ({ params }: { params: Promise<{ workspaceId: string 
                     </CreateProjectModal>
                 </div>
             </div>
+
+            <GlobalTaskSearch workspaceId={workspaceId} />
 
             {/* Stats Dashboard */}
             <div className="grid gap-4 md:grid-cols-3">

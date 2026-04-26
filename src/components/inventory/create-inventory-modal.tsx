@@ -26,11 +26,18 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 import { CreateInventoryItemSchema } from "@/schemas/inventory";
 import { createInventoryItem } from "@/actions/inventory";
 
-export const CreateInventoryModal = ({ children }: { children: React.ReactNode }) => {
+export const CreateInventoryModal = ({ children, workSites = [] }: { children: React.ReactNode, workSites?: any[] }) => {
     const params = useParams();
     const router = useRouter();
     const [open, setOpen] = useState(false);
@@ -76,14 +83,22 @@ export const CreateInventoryModal = ({ children }: { children: React.ReactNode }
             quantity: 0,
             unitCost: 0,
             lowStockThreshold: 5,
-            image: ""
+            image: "",
+            workSiteId: ""
         },
     });
 
     const onSubmit = (values: z.infer<typeof CreateInventoryItemSchema>) => {
         const workspaceId = params.workspaceId as string;
+        
+        // Handle "none" for workSiteId
+        const activeValues = {
+            ...values,
+            workSiteId: values.workSiteId === "none" ? undefined : values.workSiteId
+        };
+
         startTransition(() => {
-            createInventoryItem(workspaceId, values).then((data) => {
+            createInventoryItem(workspaceId, activeValues).then((data) => {
                 if (data?.success) {
                     form.reset();
                     setOpen(false);
@@ -162,6 +177,35 @@ export const CreateInventoryModal = ({ children }: { children: React.ReactNode }
                                     <FormControl>
                                         <Input disabled={isPending} placeholder="Item Name" {...field} />
                                     </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="workSiteId"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Work Site (Grouping)</FormLabel>
+                                    <Select 
+                                        disabled={isPending} 
+                                        onValueChange={field.onChange} 
+                                        defaultValue={field.value}
+                                    >
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select a work site" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            <SelectItem value="none">General Inventory (No Site)</SelectItem>
+                                            {workSites.map((site: any) => (
+                                                <SelectItem key={site.id} value={site.id}>
+                                                    {site.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                     <FormMessage />
                                 </FormItem>
                             )}
