@@ -35,6 +35,7 @@ interface ProjectTasksCardViewProps {
     onReminder: (task: Task) => void;
     onTogglePayment: (taskId: string, isPaid: boolean) => void;
     isPending: boolean;
+    userRole: string;
 }
 
 export const ProjectTasksCardView = ({
@@ -43,7 +44,8 @@ export const ProjectTasksCardView = ({
     onDelete,
     onReminder,
     onTogglePayment,
-    isPending
+    isPending,
+    userRole
 }: ProjectTasksCardViewProps) => {
     const getStatusColor = (status: TaskStatus) => {
         switch (status) {
@@ -149,7 +151,7 @@ export const ProjectTasksCardView = ({
                                 <Checkbox
                                     checked={task.isPaid}
                                     onCheckedChange={(checked) => onTogglePayment(task.id, checked as boolean)}
-                                    disabled={isPending}
+                                    disabled={isPending || userRole !== "ACCOUNTANT"}
                                     className="h-3 w-3"
                                 />
                             </div>

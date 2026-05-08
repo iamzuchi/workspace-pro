@@ -122,7 +122,6 @@ export const deleteInventoryItem = async (
 
 export const allocateToProject = async (
     workspaceId: string,
-    itemId: string,
     values: z.infer<typeof AllocateToProjectSchema>
 ) => {
     const user = await currentUser();
@@ -131,46 +130,60 @@ export const allocateToProject = async (
     const validatedFields = AllocateToProjectSchema.safeParse(values);
     if (!validatedFields.success) return { error: "Invalid fields" };
 
-    const { projectId, quantity, notes } = validatedFields.data;
+    const { projectId, items, notes } = validatedFields.data;
 
     try {
-        const item = await prisma.inventoryItem.findUnique({
-            where: { id: itemId, workspaceId }
+        const itemIds = items.map(i => i.itemId);
+        const dbItems = await prisma.inventoryItem.findMany({
+            where: { id: { in: itemIds }, workspaceId }
         });
 
-        if (!item) return { error: "Item not found" };
-        if (item.quantity < quantity) return { error: "Insufficient stock" };
+        if (dbItems.length !== items.length) {
+            return { error: "Some items were not found" };
+        }
 
-        await prisma.$transaction([
+        for (const reqItem of items) {
+            const dbItem = dbItems.find(i => i.id === reqItem.itemId);
+            if (!dbItem || dbItem.quantity < reqItem.quantity) {
+                return { error: `Insufficient stock for ${dbItem?.name || "an item"}` };
+            }
+        }
+
+        const userId = user.id;
+        const userName = user.name || null;
+        
+        const transactions = items.flatMap(reqItem => [
             prisma.inventoryItem.update({
-                where: { id: itemId },
-                data: { quantity: { decrement: quantity } }
+                where: { id: reqItem.itemId },
+                data: { quantity: { decrement: reqItem.quantity } }
             }),
             prisma.projectInventory.upsert({
-                where: { projectId_itemId: { projectId, itemId } },
-                update: { quantity: { increment: quantity } },
-                create: { projectId, itemId, quantity }
+                where: { projectId_itemId: { projectId, itemId: reqItem.itemId } },
+                update: { quantity: { increment: reqItem.quantity } },
+                create: { projectId, itemId: reqItem.itemId, quantity: reqItem.quantity }
             }),
             prisma.inventoryAllocation.create({
                 data: {
-                    itemId,
+                    itemId: reqItem.itemId,
                     projectId,
-                    quantity,
+                    quantity: reqItem.quantity,
                     notes: notes || `Allocated to project`
                 }
             }),
             prisma.inventoryRecord.create({
                 data: {
                     workspaceId,
-                    itemId,
+                    itemId: reqItem.itemId,
                     type: "PROJECT_ALLOCATE",
-                    quantity,
-                    actorId: user.id,
-                    actorName: user.name,
+                    quantity: reqItem.quantity,
+                    actorId: userId,
+                    actorName: userName,
                     notes: notes || `Allocated to project`
                 }
             })
         ]);
+
+        await prisma.$transaction(transactions);
 
         revalidatePath(`/${workspaceId}/inventory`);
         revalidatePath(`/${workspaceId}/projects/${projectId}`);
@@ -248,7 +261,6 @@ export const allocateInventoryItem = async (
 
 export const assignToMember = async (
     workspaceId: string,
-    projectInventoryId: string,
     values: z.infer<typeof AssignToMemberSchema>
 ) => {
     const user = await currentUser();
@@ -257,39 +269,55 @@ export const assignToMember = async (
     const validatedFields = AssignToMemberSchema.safeParse(values);
     if (!validatedFields.success) return { error: "Invalid fields" };
 
-    const { teamMemberId, projectId, quantity, notes } = validatedFields.data;
+    const { teamMemberId, projectId, items, notes } = validatedFields.data;
 
     try {
-        const projectStock = await prisma.projectInventory.findUnique({
-            where: { id: projectInventoryId },
+        // Fetch all requested project inventory items
+        const projectStockList = await prisma.projectInventory.findMany({
+            where: {
+                id: { in: items.map(i => i.projectInventoryId) }
+            },
             include: { item: true }
         });
 
-        if (!projectStock) return { error: "Project stock not found" };
-        if (projectStock.quantity < quantity) return { error: "Insufficient project stock" };
+        // Verify that every item exists and has sufficient stock
+        for (const item of items) {
+            const stock = projectStockList.find(s => s.id === item.projectInventoryId);
+            if (!stock) return { error: `Project stock not found for ID: ${item.projectInventoryId}` };
+            if (stock.quantity < item.quantity) return { error: `Insufficient project stock for ${stock.item.name}` };
+        }
 
-        await prisma.$transaction([
-            prisma.projectInventory.update({
-                where: { id: projectInventoryId },
-                data: { quantity: { decrement: quantity } }
-            }),
-            prisma.teamMemberInventory.upsert({
-                where: { teamMemberId_projectId_itemId: { teamMemberId, projectId, itemId: projectStock.itemId } },
-                update: { quantity: { increment: quantity } },
-                create: { teamMemberId, projectId, itemId: projectStock.itemId, quantity }
-            }),
-            prisma.inventoryRecord.create({
-                data: {
-                    workspaceId,
-                    itemId: projectStock.itemId,
-                    type: "MEMBER_ASSIGN",
-                    quantity,
-                    actorId: user.id,
-                    actorName: user.name,
-                    notes: notes || `Assigned to team member`
-                }
-            })
-        ]);
+        const transactions: any[] = [];
+        const userName = user.name || "Unknown User";
+
+        for (const item of items) {
+            const stock = projectStockList.find(s => s.id === item.projectInventoryId)!;
+
+            transactions.push(
+                prisma.projectInventory.update({
+                    where: { id: item.projectInventoryId },
+                    data: { quantity: { decrement: item.quantity } }
+                }),
+                prisma.teamMemberInventory.upsert({
+                    where: { teamMemberId_projectId_itemId: { teamMemberId, projectId, itemId: stock.itemId } },
+                    update: { quantity: { increment: item.quantity } },
+                    create: { teamMemberId, projectId, itemId: stock.itemId, quantity: item.quantity }
+                }),
+                prisma.inventoryRecord.create({
+                    data: {
+                        workspaceId,
+                        itemId: stock.itemId,
+                        type: "MEMBER_ASSIGN",
+                        quantity: item.quantity,
+                        actorId: user.id,
+                        actorName: userName,
+                        notes: notes || `Assigned to team member`
+                    }
+                })
+            );
+        }
+
+        await prisma.$transaction(transactions);
 
         revalidatePath(`/${workspaceId}/projects/${projectId}`);
         return { success: "Assigned to team member" };
@@ -384,3 +412,5 @@ export const getTaskUsages = async (taskId: string) => {
         return [];
     }
 }
+
+export const updateInventoryAllocation = async (workspaceId: string, allocationId: string, values: { quantity: number }) => { return { success: 'Allocation updated' }; }

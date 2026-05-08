@@ -12,14 +12,20 @@ export const CreateInventoryItemSchema = z.object({
 });
 export const AllocateToProjectSchema = z.object({
     projectId: z.string().min(1, "Project is required"),
-    quantity: z.coerce.number().min(1, "Quantity must be at least 1"),
+    items: z.array(z.object({
+        itemId: z.string().min(1, "Item is required"),
+        quantity: z.coerce.number().min(1, "Quantity must be at least 1"),
+    })).min(1, "At least one item is required"),
     notes: z.string().optional(),
 });
 
 export const AssignToMemberSchema = z.object({
     teamMemberId: z.string().min(1, "Team member is required"),
     projectId: z.string().min(1, "Project is required"),
-    quantity: z.coerce.number().min(1, "Quantity must be at least 1"),
+    items: z.array(z.object({
+        projectInventoryId: z.string().min(1, "Item is required"),
+        quantity: z.coerce.number().min(1, "Quantity must be at least 1"),
+    })).min(1, "At least one item is required"),
     notes: z.string().optional(),
 });
 

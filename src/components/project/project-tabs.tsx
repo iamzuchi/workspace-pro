@@ -48,6 +48,7 @@ interface ProjectTabsProps {
     contractors: any[];
     totalExpenses: number;
     currentUserId: string;
+    userRole: string;
 }
 
 export const ProjectTabs = ({
@@ -65,7 +66,8 @@ export const ProjectTabs = ({
     members,
     contractors,
     totalExpenses,
-    currentUserId
+    currentUserId,
+    userRole
 }: ProjectTabsProps) => {
     const [activeTab, setActiveTab] = useState("overview");
 
@@ -142,9 +144,9 @@ export const ProjectTabs = ({
             <TabsContent value="tasks" className="space-y-4">
                 <div className="flex items-center justify-between">
                     <h3 className="text-lg font-semibold">Project Tasks</h3>
-                    <CreateTaskModal workspaceId={workspaceId} projectId={projectId} members={members.map((m: any) => m.user)} />
+                    <CreateTaskModal workspaceId={workspaceId} projectId={projectId} members={members.map((m: any) => m.user)} userRole={userRole} />
                 </div>
-                <ProjectTasksTable workspaceId={workspaceId} projectId={projectId} tasks={tasks} members={members.map((m: any) => m.user)} projectTeams={project.teams as any} currentUserId={currentUserId} />
+                <ProjectTasksTable workspaceId={workspaceId} projectId={projectId} tasks={tasks} members={members.map((m: any) => m.user)} projectTeams={project.teams as any} currentUserId={currentUserId} userRole={userRole} />
             </TabsContent>
 
             <TabsContent value="team" className="space-y-4">

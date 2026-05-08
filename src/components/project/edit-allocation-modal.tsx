@@ -77,7 +77,7 @@ export const EditAllocationModal = ({
         startTransition(() => {
             updateInventoryAllocation(workspaceId, allocation.id, {
                 quantity: values.quantity
-            }).then((data) => {
+            }).then((data: any) => {
                 if (data?.error) {
                     toast.error(data.error);
                 }

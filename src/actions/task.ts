@@ -36,6 +36,19 @@ export const createTask = async (
             return { error: "A task with this title already exists in this project." };
         }
 
+        const member = await prisma.workspaceMember.findUnique({
+            where: {
+                workspaceId_userId: {
+                    workspaceId,
+                    userId: user.id!
+                }
+            }
+        });
+
+        if (values.isPaid && member?.role !== "ACCOUNTANT") {
+            return { error: "Only an accountant can create a task marked as paid" };
+        }
+
         const task = await prisma.task.create({
             data: {
                 ...values,
@@ -108,9 +121,16 @@ export const updateTask = async (
         const isAdmin = member?.role === "ADMIN";
         const isManager = member?.role === "PROJECT_MANAGER";
         const isAssignee = existingTask.assignedUserId === user.id;
+        const isAccountant = member?.role === "ACCOUNTANT";
 
-        if (!isOwner && !isAdmin && !isManager && !isAssignee) {
+        if (!isOwner && !isAdmin && !isManager && !isAssignee && !isAccountant) {
             return { error: "You do not have permission to edit this task" };
+        }
+
+        if (values.isPaid !== undefined && values.isPaid !== existingTask.isPaid) {
+             if (!isAccountant) {
+                 return { error: "Only an accountant can change a task's payment status" };
+             }
         }
 
         if (values.title && values.title !== existingTask.title) {

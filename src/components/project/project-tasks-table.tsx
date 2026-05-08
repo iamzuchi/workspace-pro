@@ -60,6 +60,7 @@ interface ProjectTasksTableProps {
     members: { id: string; name: string | null; image?: string | null }[];
     projectTeams?: { id: string; name: string; members: { id: string; name: string }[] }[];
     currentUserId: string;
+    userRole: string;
 }
 
 export const ProjectTasksTable = ({
@@ -69,6 +70,7 @@ export const ProjectTasksTable = ({
     members,
     projectTeams = [],
     currentUserId,
+    userRole,
 }: ProjectTasksTableProps) => {
     const [isPending, startTransition] = useTransition();
     const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -321,7 +323,7 @@ export const ProjectTasksTable = ({
                                         <Checkbox
                                             checked={task.isPaid}
                                             onCheckedChange={(checked) => togglePayment(task.id, checked as boolean)}
-                                            disabled={isPending}
+                                            disabled={isPending || userRole !== "ACCOUNTANT"}
                                         />
                                     </TableCell>
                                     <TableCell className="text-right">
@@ -382,6 +384,7 @@ export const ProjectTasksTable = ({
                     }}
                     onTogglePayment={togglePayment}
                     isPending={isPending}
+                    userRole={userRole}
                 />
             )}
             <EditTaskModal
@@ -393,6 +396,7 @@ export const ProjectTasksTable = ({
                 members={members}
                 projectTeams={projectTeams}
                 currentUserId={currentUserId}
+                userRole={userRole}
             />
             {reminderTask && (
                 <SetReminderModal

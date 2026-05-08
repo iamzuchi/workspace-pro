@@ -104,6 +104,8 @@ const ProjectDetailsPage = async ({
     const plainWorkspaceItems = serializeDecimal(workspaceItems);
     const plainContractors = serializeDecimal(contractors);
 
+    const userRole = project.workspace.ownerId === user?.id ? "OWNER" : member?.role;
+
     return (
         <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
             <div className="mb-2">
@@ -126,13 +128,13 @@ const ProjectDetailsPage = async ({
                     <ProjectEditSheet
                         workspaceId={workspaceId}
                         project={plainProject}
-                        userRole={project.workspace.ownerId === user?.id ? "OWNER" : member?.role}
+                        userRole={userRole}
                         members={members}
                         workspaceMembers={workspaceMembers}
                         workspaceTeams={workspaceTeams}
                         defaultOpen={defaultEditOpen}
                     />
-                    <CreateTaskModal workspaceId={workspaceId} projectId={projectId} members={members.map((m: any) => m.user)} />
+                    <CreateTaskModal workspaceId={workspaceId} projectId={projectId} members={members.map((m: any) => m.user)} userRole={userRole as string} />
                 </div>
             </div>
 
@@ -152,6 +154,7 @@ const ProjectDetailsPage = async ({
                 contractors={plainContractors}
                 totalExpenses={totalExpenses}
                 currentUserId={user.id as string}
+                userRole={userRole as string}
             />
         </div>
     );

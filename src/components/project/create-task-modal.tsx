@@ -52,6 +52,7 @@ interface CreateTaskModalProps {
     projectId: string;
     members: { id: string; name: string | null; image?: string | null }[];
     projectTeams?: { id: string; name: string; members: { id: string; name: string }[] }[];
+    userRole?: string;
 }
 
 export const CreateTaskModal = ({
@@ -59,6 +60,7 @@ export const CreateTaskModal = ({
     projectId,
     members,
     projectTeams = [],
+    userRole,
 }: CreateTaskModalProps) => {
     const [open, setOpen] = useState(false);
     const [isPending, startTransition] = useTransition();
@@ -262,7 +264,7 @@ export const CreateTaskModal = ({
                                         <Checkbox
                                             checked={field.value}
                                             onCheckedChange={field.onChange}
-                                            disabled={isPending}
+                                            disabled={isPending || userRole !== "ACCOUNTANT"}
                                         />
                                     </FormControl>
                                     <div className="space-y-1 leading-none">

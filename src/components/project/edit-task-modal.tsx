@@ -64,6 +64,7 @@ interface EditTaskModalProps {
     members: { id: string; name: string | null; image?: string | null }[];
     projectTeams?: { id: string; name: string; members: { id: string; name: string }[] }[];
     currentUserId: string;
+    userRole?: string;
 }
 
 import { TaskComments } from "./task-comments";
@@ -78,6 +79,7 @@ export const EditTaskModal = ({
     members,
     projectTeams = [],
     currentUserId,
+    userRole,
 }: EditTaskModalProps) => {
     const [isPending, startTransition] = useTransition();
 
@@ -310,7 +312,7 @@ export const EditTaskModal = ({
                                                 <Checkbox
                                                     checked={field.value}
                                                     onCheckedChange={field.onChange}
-                                                    disabled={isPending}
+                                                    disabled={isPending || userRole !== "ACCOUNTANT"}
                                                 />
                                             </FormControl>
                                             <div className="space-y-1 leading-none">
