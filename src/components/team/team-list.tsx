@@ -99,10 +99,14 @@ export const TeamList = ({ teams, workspaceId, projects, currency }: TeamListPro
                                 </AlertDialog>
                             </div>
                         </div>
-                        {team.project && (
-                            <div className="flex items-center gap-1 text-sm text-zinc-500 mt-1">
-                                <Briefcase className="h-3.5 w-3.5" />
-                                <span>{team.project.name}</span>
+                        {team.projects && team.projects.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mt-2">
+                                {team.projects.map((project: any) => (
+                                    <div key={project.id} className="flex items-center gap-1 text-[11px] text-zinc-500 bg-zinc-100 px-2 py-0.5 rounded-full">
+                                        <Briefcase className="h-3 w-3" />
+                                        <span>{project.name}</span>
+                                    </div>
+                                ))}
                             </div>
                         )}
                     </CardHeader>

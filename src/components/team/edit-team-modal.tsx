@@ -58,7 +58,6 @@ export const EditTeamModal = ({
         defaultValues: {
             name: team.name,
             description: team.description || "",
-            projectId: team.projectId || undefined,
             members: team.members.map(m => ({
                 name: m.name,
                 contact: m.contact || "",
@@ -73,7 +72,6 @@ export const EditTeamModal = ({
             form.reset({
                 name: team.name,
                 description: team.description || "",
-                projectId: team.projectId || undefined,
                 members: team.members.map(m => ({
                     name: m.name,
                     contact: m.contact || "",
@@ -124,36 +122,6 @@ export const EditTeamModal = ({
                                     </FormItem>
                                 )}
                             />
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <FormField
-                                    control={form.control}
-                                    name="projectId"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel className="font-bold">Project (Optional)</FormLabel>
-                                            <Select
-                                                disabled={isPending}
-                                                onValueChange={field.onChange}
-                                                defaultValue={field.value ?? undefined}
-                                            >
-                                                <FormControl>
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Select a project" />
-                                                    </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent>
-                                                    {projects.map((project) => (
-                                                        <SelectItem key={project.id} value={project.id}>
-                                                            {project.name}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
                             <FormField
                                 control={form.control}
                                 name="description"

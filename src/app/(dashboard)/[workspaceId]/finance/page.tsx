@@ -78,6 +78,10 @@ const FinancePage = async ({ params }: { params: Promise<{ workspaceId: string }
         where: { team: { workspaceId } }
     });
 
+    const projects = await prisma.project.findMany({
+        where: { workspaceId }
+    });
+
     // Serialize data for Client Components
     const serializedInvoices = serializeDecimal(invoices);
     const serializedPayments = serializeDecimal(payments);
@@ -125,7 +129,7 @@ const FinancePage = async ({ params }: { params: Promise<{ workspaceId: string }
                     <p className="text-sm text-muted-foreground">Manage your invoices, payments, expenses, and financial reports.</p>
                 </div>
                 <div className="flex items-center flex-wrap gap-2 w-full sm:w-auto">
-                    <CreateExpenseModal teams={teams} members={members} />
+                    <CreateExpenseModal teams={teams} members={members} projects={projects} />
                     <Button asChild className="w-full sm:w-auto">
                         <Link href={`/${workspaceId}/finance/create`}>
                             <Plus className="mr-2 h-4 w-4" /> Create Invoice

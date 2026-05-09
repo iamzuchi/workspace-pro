@@ -447,18 +447,16 @@ model Task {
 model Team {
   id          String       @id @default(cuid())
   workspaceId String
-  projectId   String?
   name        String
   description String?
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   expenses    Expense[]
-  project     Project?     @relation(fields: [projectId], references: [id])
+  projects    Project[]
   workspace   Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   members     TeamMember[]
 
   @@index([workspaceId])
-  @@index([projectId])
 }
 
 model TeamMember {

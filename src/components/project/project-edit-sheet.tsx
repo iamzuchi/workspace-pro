@@ -305,7 +305,7 @@ export const ProjectEditSheet = ({
                             {/* Teams Section */}
                             <div className="space-y-4 pb-4 border-b">
                                 <div className="flex items-center justify-between">
-                                    <h3 className="text-sm font-medium">Assigned Team</h3>
+                                    <h3 className="text-sm font-medium">Assigned Teams</h3>
                                 </div>
                                 <div className="flex gap-2">
                                     <Select onValueChange={async (teamId) => {
@@ -325,14 +325,11 @@ export const ProjectEditSheet = ({
                                         }
                                     }} disabled={isPending}>
                                         <SelectTrigger className="w-full">
-                                            <SelectValue placeholder={project.teams?.[0]?.name || "Select a team to assign..."} />
+                                            <SelectValue placeholder="Select a team to assign..." />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {workspaceTeams
-                                                .filter(t => t.projectId !== project.id) // Filter already assigned (though schema implies 1 team per project, or 1 project per team?)
-                                                // Actually schema: Team has projectId. One Team -> One Project.
-                                                // So filter teams that are NOT assigned to ANY project.
-                                                .filter(t => !t.projectId || t.projectId === project.id)
+                                                .filter(t => !project.teams?.some((pt: any) => pt.id === t.id))
                                                 .map((t) => (
                                                     <SelectItem key={t.id} value={t.id}>
                                                         {t.name}
@@ -340,35 +337,39 @@ export const ProjectEditSheet = ({
                                                 ))}
                                         </SelectContent>
                                     </Select>
-                                    {project.teams?.[0] && (
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            disabled={isPending}
-                                            onClick={async () => {
-                                                setIsPending(true);
-                                                try {
-                                                    const { unassignTeamFromProject } = await import("@/actions/team-assignment");
-                                                    const res = await unassignTeamFromProject(workspaceId, project.id, project.teams[0].id);
-                                                    if (res.error) toast.error(res.error);
-                                                    else {
-                                                        toast.success("Team unassigned");
-                                                        router.refresh();
-                                                    }
-                                                } catch {
-                                                    toast.error("Failed to unassign team");
-                                                } finally {
-                                                    setIsPending(false);
-                                                }
-                                            }}
-                                        >
-                                            <Trash className="h-4 w-4 text-destructive" />
-                                        </Button>
-                                    )}
                                 </div>
-                                {project.teams?.[0] && (
-                                    <div className="p-3 rounded-lg border bg-blue-50/50 flex items-center justify-between">
-                                        <span className="text-sm font-medium text-blue-700">{project.teams[0].name}</span>
+                                
+                                {project.teams && project.teams.length > 0 && (
+                                    <div className="space-y-2">
+                                        {project.teams.map((team: any) => (
+                                            <div key={team.id} className="p-3 rounded-lg border bg-blue-50/50 flex items-center justify-between">
+                                                <span className="text-sm font-medium text-blue-700">{team.name}</span>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8"
+                                                    disabled={isPending}
+                                                    onClick={async () => {
+                                                        setIsPending(true);
+                                                        try {
+                                                            const { unassignTeamFromProject } = await import("@/actions/team-assignment");
+                                                            const res = await unassignTeamFromProject(workspaceId, project.id, team.id);
+                                                            if (res.error) toast.error(res.error);
+                                                            else {
+                                                                toast.success("Team unassigned");
+                                                                router.refresh();
+                                                            }
+                                                        } catch {
+                                                            toast.error("Failed to unassign team");
+                                                        } finally {
+                                                            setIsPending(false);
+                                                        }
+                                                    }}
+                                                >
+                                                    <Trash className="h-4 w-4 text-destructive" />
+                                                </Button>
+                                            </div>
+                                        ))}
                                     </div>
                                 )}
                             </div>

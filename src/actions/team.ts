@@ -25,13 +25,14 @@ export const createTeam = async (
     const { name, description, projectId, members } = validatedFields.data;
 
     try {
-        // @ts-ignore
         const team = await prisma.team.create({
             data: {
                 workspaceId,
-                projectId,
                 name,
                 description,
+                projects: projectId ? {
+                    connect: { id: projectId }
+                } : undefined,
                 members: {
                     create: members?.map(member => ({
                         name: member.name,
@@ -77,13 +78,13 @@ export const updateTeam = async (
 
     try {
         await prisma.$transaction(async (tx) => {
-            // @ts-ignore
             await tx.team.update({
                 where: { id: teamId, workspaceId },
                 data: {
                     name,
                     description,
-                    projectId,
+                    // Note: We don't update projects here as it's many-to-many and managed separately
+                    // but we can optionally handle the single projectId if provided in the schema
                 }
             });
 
@@ -126,12 +127,19 @@ export const deleteTeam = async (workspaceId: string, teamId: string) => {
     if (!isAllowed) return { error: "Permission denied" };
 
     try {
-        // @ts-ignore
         const team = await prisma.team.delete({
-            where: { id: teamId, workspaceId }
+            where: { id: teamId, workspaceId },
+            include: { projects: true }
         });
 
-        await logActivity(workspaceId, team.projectId || null, "DELETED_TEAM", `Team "${team.name}" deleted`);
+        // Log activity for each project the team was part of
+        if (team.projects && team.projects.length > 0) {
+            for (const project of team.projects) {
+                await logActivity(workspaceId, project.id, "DELETED_TEAM", `Team "${team.name}" deleted`);
+            }
+        } else {
+            await logActivity(workspaceId, null, "DELETED_TEAM", `Team "${team.name}" deleted`);
+        }
 
 
         revalidatePath(`/${workspaceId}/team`);
@@ -144,12 +152,11 @@ export const deleteTeam = async (workspaceId: string, teamId: string) => {
 
 export const getTeams = async (workspaceId: string) => {
     try {
-        // @ts-ignore
         const teams = await prisma.team.findMany({
             where: { workspaceId },
             include: {
                 members: true,
-                project: true,
+                projects: true,
                 expenses: true,
             },
             orderBy: {
@@ -159,7 +166,7 @@ export const getTeams = async (workspaceId: string) => {
 
         // Calculate metrics
         const teamsWithMetrics = teams.map((team: any) => {
-            const totalProjects = team.projectId ? 1 : 0;
+            const totalProjects = team.projects?.length || 0;
 
             const totalPaid = team.expenses
                 .filter((ex: any) => ex.status === "PAID")

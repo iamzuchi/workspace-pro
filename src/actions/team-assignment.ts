@@ -13,16 +13,13 @@ export const assignTeamToProject = async (workspaceId: string, projectId: string
     if (!isAllowed) return { error: "Permission denied" };
 
     try {
-        // Unassign any currently assigned team(s) for this project
-        // to enforce the 1-to-1 UI expectation
-        await prisma.team.updateMany({
-            where: { projectId, workspaceId },
-            data: { projectId: null }
-        });
-
         await prisma.team.update({
             where: { id: teamId, workspaceId },
-            data: { projectId }
+            data: { 
+                projects: {
+                    connect: { id: projectId }
+                }
+            }
         });
 
         revalidatePath(`/${workspaceId}/projects/${projectId}`);
@@ -43,7 +40,11 @@ export const unassignTeamFromProject = async (workspaceId: string, projectId: st
     try {
         await prisma.team.update({
             where: { id: teamId, workspaceId },
-            data: { projectId: null }
+            data: { 
+                projects: {
+                    disconnect: { id: projectId }
+                }
+            }
         });
 
         revalidatePath(`/${workspaceId}/projects/${projectId}`);

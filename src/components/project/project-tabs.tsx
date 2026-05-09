@@ -14,6 +14,7 @@ import { ActivityFeed } from "./activity-feed";
 import { CreateTaskModal } from "./create-task-modal";
 import { AllocateInventoryModal } from "./allocate-inventory-modal";
 import { MemberAssignmentModal } from "./member-assignment-modal";
+import { DocumentList } from "../document/document-list";
 import { DocumentUploadButton } from "../document/document-upload-button";
 import { Badge } from "@/components/ui/badge";
 import { Download, Package, Receipt, PlusCircle, ExternalLink, FileIcon, ImageIcon, FileTextIcon, Warehouse, User } from "lucide-react";
@@ -23,6 +24,8 @@ import Link from "next/link";
 import { ProjectTeamSection } from "@/components/project/project-team-section";
 import { ProjectBudgetCard } from "./project-budget-card";
 import { CreateExpenseModal } from "@/components/finance/create-expense-modal";
+import { ExpenseTable } from "@/components/finance/expense-table";
+import { Role } from "@prisma/client";
 import {
     Table,
     TableBody,
@@ -100,7 +103,15 @@ export const ProjectTabs = ({
                     Inventory
                 </TabsTrigger>
                 <TabsTrigger value="expenses">Expenses</TabsTrigger>
-                <TabsTrigger value="documents">Documents</TabsTrigger>
+                <TabsTrigger value="documents" className="gap-2">
+                    <FileTextIcon className="h-4 w-4" />
+                    Documents
+                    {documents.length > 0 && (
+                        <Badge variant="secondary" className="h-4 px-1 min-w-[16px] text-[10px]">
+                            {documents.length}
+                        </Badge>
+                    )}
+                </TabsTrigger>
                 {/* <TabsTrigger value="comments">Comments</TabsTrigger> */}
             </TabsList>
 
@@ -265,9 +276,26 @@ export const ProjectTabs = ({
             <TabsContent value="expenses" className="space-y-4">
                 <div className="flex items-center justify-between">
                     <h3 className="text-lg font-semibold">Project Expenses</h3>
-                    <CreateExpenseModal projectId={projectId} />
+                    <CreateExpenseModal projectId={projectId} projects={[project]} />
                 </div>
-                {/* ... existing expense table ... */}
+                <ExpenseTable 
+                    expenses={project.expenses} 
+                    workspaceId={workspaceId} 
+                    currencySymbol={project.workspace.currency || "USD"}
+                    workspace={project.workspace}
+                    userRole={userRole as any}
+                />
+            </TabsContent>
+
+            <TabsContent value="documents" className="space-y-4">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h3 className="text-lg font-semibold">Project Documents</h3>
+                        <p className="text-sm text-zinc-500">Manage blueprints, site photos, and legal documents for this project.</p>
+                    </div>
+                    <DocumentUploadButton workspaceId={workspaceId} projectId={projectId} />
+                </div>
+                <DocumentList workspaceId={workspaceId} documents={documents} />
             </TabsContent>
         </Tabs>
     );

@@ -26,7 +26,7 @@ import { useState, useTransition } from "react";
 import { createExpense } from "@/actions/expense";
 import { toast } from "sonner";
 import { useParams, useRouter } from "next/navigation";
-import { Plus, Loader2, CalendarIcon, Users, User } from "lucide-react";
+import { Plus, Loader2, CalendarIcon, Users, User, Folder } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
@@ -58,12 +58,14 @@ const EXPENSE_CATEGORIES = [
 
 interface CreateExpenseModalProps {
     projectId?: string;
+    projects?: any[];
     teams?: any[];
     members?: any[];
 }
 
 export const CreateExpenseModal = ({ 
     projectId, 
+    projects = [],
     teams = [], 
     members = [] 
 }: CreateExpenseModalProps) => {
@@ -88,8 +90,16 @@ export const CreateExpenseModal = ({
     });
 
     const onSubmit = (values: z.infer<typeof CreateExpenseSchema>) => {
+        // Handle "none" values
+        const submissionValues = {
+            ...values,
+            teamId: values.teamId === "none" ? undefined : values.teamId,
+            teamMemberId: values.teamMemberId === "none" ? undefined : values.teamMemberId,
+            projectId: values.projectId === "none" ? undefined : values.projectId,
+        };
+
         startTransition(() => {
-            createExpense(workspaceId, values).then((data) => {
+            createExpense(workspaceId, submissionValues).then((data) => {
                 if (data.success) {
                     toast.success(data.success);
                     setOpen(false);
