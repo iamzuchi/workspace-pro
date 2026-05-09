@@ -13,6 +13,13 @@ export const assignTeamToProject = async (workspaceId: string, projectId: string
     if (!isAllowed) return { error: "Permission denied" };
 
     try {
+        // Unassign any currently assigned team(s) for this project
+        // to enforce the 1-to-1 UI expectation
+        await prisma.team.updateMany({
+            where: { projectId, workspaceId },
+            data: { projectId: null }
+        });
+
         await prisma.team.update({
             where: { id: teamId, workspaceId },
             data: { projectId }
@@ -20,7 +27,8 @@ export const assignTeamToProject = async (workspaceId: string, projectId: string
 
         revalidatePath(`/${workspaceId}/projects/${projectId}`);
         return { success: "Team assigned to project" };
-    } catch {
+    } catch (error) {
+        console.error("Assign team error:", error);
         return { error: "Failed to assign team" };
     }
 };
