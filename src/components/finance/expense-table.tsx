@@ -31,7 +31,9 @@ import { ExpenseReceiptButton } from "./expense-receipt-button";
 import { ExportCsvButton } from "./export-csv-button";
 import { deleteExpense } from "@/actions/expense";
 import { toast } from "sonner";
+// TypeScript Server Refresh Comment
 import { Role } from "@prisma/client";
+import { EditExpenseModal } from "./edit-expense-modal";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -50,6 +52,9 @@ interface ExpenseTableProps {
     currencySymbol: string;
     workspace: any;
     userRole: Role | undefined;
+    projects?: any[];
+    teams?: any[];
+    members?: any[];
 }
 
 export const ExpenseTable = ({ 
@@ -57,10 +62,14 @@ export const ExpenseTable = ({
     workspaceId, 
     currencySymbol, 
     workspace,
-    userRole 
+    userRole,
+    projects = [],
+    teams = [],
+    members = []
 }: ExpenseTableProps) => {
     const [searchTerm, setSearchTerm] = useState("");
     const [categoryFilter, setCategoryFilter] = useState("all");
+    const [editingExpense, setEditingExpense] = useState<any | null>(null);
 
     const categories = Array.from(new Set(expenses.map(e => e.category)));
 
@@ -180,7 +189,10 @@ export const ExpenseTable = ({
                                                     </Button>
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end">
-                                                    <DropdownMenuItem className="cursor-pointer">
+                                                    <DropdownMenuItem 
+                                                        className="cursor-pointer"
+                                                        onClick={() => setEditingExpense(expense)}
+                                                    >
                                                         <Edit className="mr-2 h-4 w-4" /> Edit
                                                     </DropdownMenuItem>
                                                     <AlertDialog>
@@ -221,6 +233,17 @@ export const ExpenseTable = ({
                     </TableBody>
                 </Table>
             </div>
+            <EditExpenseModal
+                expense={editingExpense}
+                open={!!editingExpense}
+                onOpenChange={(open) => {
+                    if (!open) setEditingExpense(null);
+                }}
+                workspaceId={workspaceId}
+                projects={projects}
+                teams={teams}
+                members={members}
+            />
         </div>
     );
 };

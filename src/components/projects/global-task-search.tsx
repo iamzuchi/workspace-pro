@@ -13,7 +13,7 @@ import {
     CommandList,
     CommandSeparator,
 } from "@/components/ui/command";
-import { searchTasks } from "@/actions/task";
+import { searchTasks, searchProjects } from "@/actions/task";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
@@ -24,7 +24,7 @@ interface GlobalTaskSearchProps {
 export const GlobalTaskSearch = ({ workspaceId }: GlobalTaskSearchProps) => {
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState("");
-    const [results, setResults] = useState<any[]>([]);
+    const [results, setResults] = useState<{ tasks: any[]; projects: any[] }>({ tasks: [], projects: [] });
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
 
@@ -41,17 +41,20 @@ export const GlobalTaskSearch = ({ workspaceId }: GlobalTaskSearchProps) => {
 
     const fetchResults = useCallback(async (searchQuery: string) => {
         if (searchQuery.length < 2) {
-            setResults([]);
+            setResults({ tasks: [], projects: [] });
             return;
         }
 
         setIsLoading(true);
         try {
-            const tasks = await searchTasks(workspaceId, searchQuery);
-            setResults(tasks);
+            const [tasks, projects] = await Promise.all([
+                searchTasks(workspaceId, searchQuery),
+                searchProjects(workspaceId, searchQuery)
+            ]);
+            setResults({ tasks, projects });
         } catch (error) {
-            console.error("Failed to fetch tasks", error);
-            setResults([]);
+            console.error("Failed to fetch search results", error);
+            setResults({ tasks: [], projects: [] });
         } finally {
             setIsLoading(false);
         }
@@ -65,9 +68,14 @@ export const GlobalTaskSearch = ({ workspaceId }: GlobalTaskSearchProps) => {
         return () => clearTimeout(timer);
     }, [query, fetchResults]);
 
-    const onSelect = (projectId: string, taskId: string) => {
+    const onSelectTask = (projectId: string, taskId: string) => {
         setOpen(false);
         router.push(`/${workspaceId}/projects/${projectId}?taskId=${taskId}`);
+    };
+
+    const onSelectProject = (projectId: string) => {
+        setOpen(false);
+        router.push(`/${workspaceId}/projects/${projectId}`);
     };
 
     return (
@@ -78,16 +86,16 @@ export const GlobalTaskSearch = ({ workspaceId }: GlobalTaskSearchProps) => {
             >
                 <Search className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
                 <p className="font-semibold text-sm text-muted-foreground group-hover:text-foreground transition">
-                    Search tasks across projects...
+                    Search projects and tasks...
                 </p>
                 <kbd className="ml-auto pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
                     <span className="text-xs">⌘</span>K
                 </kbd>
             </div>
 
-            <CommandDialog open={open} onOpenChange={setOpen}>
+            <CommandDialog open={open} onOpenChange={setOpen} shouldFilter={false}>
                 <CommandInput 
-                    placeholder="Type task title or description..." 
+                    placeholder="Type project or task title..." 
                     value={query}
                     onValueChange={setQuery}
                 />
@@ -98,15 +106,37 @@ export const GlobalTaskSearch = ({ workspaceId }: GlobalTaskSearchProps) => {
                                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                             </div>
                         ) : (
-                            "No tasks found."
+                            "No results found."
                         )}
                     </CommandEmpty>
-                    {results.length > 0 && (
+                    
+                    {!isLoading && results.projects.length > 0 && (
+                        <CommandGroup heading="Projects">
+                            {results.projects.map((project) => (
+                                <CommandItem 
+                                    key={project.id}
+                                    onSelect={() => onSelectProject(project.id)}
+                                    className="cursor-pointer"
+                                >
+                                    <div className="flex flex-col gap-y-1 w-full">
+                                        <span className="font-medium">{project.name}</span>
+                                        {project.description && (
+                                            <span className="text-xs text-muted-foreground truncate max-w-[400px]">
+                                                {project.description}
+                                            </span>
+                                        )}
+                                    </div>
+                                </CommandItem>
+                            ))}
+                        </CommandGroup>
+                    )}
+
+                    {!isLoading && results.tasks.length > 0 && (
                         <CommandGroup heading="Tasks">
-                            {results.map((task) => (
+                            {results.tasks.map((task) => (
                                 <CommandItem 
                                     key={task.id}
-                                    onSelect={() => onSelect(task.projectId, task.id)}
+                                    onSelect={() => onSelectTask(task.projectId, task.id)}
                                     className="cursor-pointer"
                                 >
                                     <div className="flex flex-col gap-y-1 w-full">

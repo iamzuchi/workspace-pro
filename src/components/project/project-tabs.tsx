@@ -25,6 +25,7 @@ import { ProjectTeamSection } from "@/components/project/project-team-section";
 import { ProjectBudgetCard } from "./project-budget-card";
 import { CreateExpenseModal } from "@/components/finance/create-expense-modal";
 import { ExpenseTable } from "@/components/finance/expense-table";
+// TypeScript Server Refresh Comment
 import { Role } from "@prisma/client";
 import {
     Table,
@@ -276,7 +277,12 @@ export const ProjectTabs = ({
             <TabsContent value="expenses" className="space-y-4">
                 <div className="flex items-center justify-between">
                     <h3 className="text-lg font-semibold">Project Expenses</h3>
-                    <CreateExpenseModal projectId={projectId} projects={[project]} />
+                    <CreateExpenseModal 
+                        projectId={projectId} 
+                        projects={[project]} 
+                        teams={project.teams}
+                        members={teamMembers}
+                    />
                 </div>
                 <ExpenseTable 
                     expenses={project.expenses} 
@@ -284,6 +290,9 @@ export const ProjectTabs = ({
                     currencySymbol={project.workspace.currency || "USD"}
                     workspace={project.workspace}
                     userRole={userRole as any}
+                    projects={[project]}
+                    teams={project.teams}
+                    members={teamMembers}
                 />
             </TabsContent>
 

@@ -1,5 +1,6 @@
 "use server";
 
+// TypeScript Server Refresh Comment
 import prisma from "@/lib/db";
 import { currentUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
@@ -343,4 +344,29 @@ export const searchTasks = async (workspaceId: string, query: string) => {
         console.error("Search tasks error:", error);
         return [];
     }
-}
+};
+
+export const searchProjects = async (workspaceId: string, query: string) => {
+    const user = await currentUser();
+    if (!user) return [];
+
+    if (!query || query.length < 2) return [];
+
+    try {
+        const projects = await prisma.project.findMany({
+            where: {
+                workspaceId,
+                name: { contains: query, mode: 'insensitive' }
+            },
+            take: 10,
+            orderBy: {
+                updatedAt: 'desc'
+            }
+        });
+
+        return projects;
+    } catch (error) {
+        console.error("Search projects error:", error);
+        return [];
+    }
+};

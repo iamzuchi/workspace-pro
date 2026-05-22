@@ -81,6 +81,19 @@ export const InvoiceForm = ({ initialData, invoiceId }: InvoiceFormProps) => {
     };
 
     const watchItems = form.watch("items");
+    const getDuplicateIndices = () => {
+        const descriptions = watchItems.map(item => item?.description?.trim()?.toLowerCase());
+        const duplicates = new Set<number>();
+        descriptions.forEach((desc, idx) => {
+            if (!desc) return;
+            if (descriptions.indexOf(desc) !== idx || descriptions.lastIndexOf(desc) !== idx) {
+                duplicates.add(idx);
+            }
+        });
+        return duplicates;
+    };
+    const duplicateIndices = getDuplicateIndices();
+
     const subtotal = watchItems.reduce((acc, item) => acc + (Number(item.quantity) * Number(item.unitPrice) || 0), 0);
     const taxRate = form.watch("taxRate") || 0;
     const taxAmount = subtotal * (taxRate / 100);
@@ -225,33 +238,40 @@ export const InvoiceForm = ({ initialData, invoiceId }: InvoiceFormProps) => {
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between">
                         <CardTitle>Invoice Items</CardTitle>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => append({ description: "", quantity: 1, unitPrice: 0 })}
-                        >
-                            <Plus className="mr-2 h-4 w-4" /> Add Item
-                        </Button>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <div className="grid grid-cols-12 gap-4 pb-2 border-b text-sm font-semibold text-muted-foreground">
-                            <div className="col-span-6">Description</div>
+                        <div className="grid grid-cols-12 gap-4 pb-2 border-b text-sm font-semibold text-muted-foreground items-center">
+                            <div className="col-span-1 text-center">#</div>
+                            <div className="col-span-5">Description</div>
                             <div className="col-span-2 text-center">Qty</div>
                             <div className="col-span-3 text-right">Unit Price</div>
                             <div className="col-span-1"></div>
                         </div>
                         {fields.map((field, index) => (
                             <div key={field.id} className="grid grid-cols-12 gap-4 items-start">
-                                <div className="col-span-6">
+                                <div className="col-span-1 flex items-center justify-center h-10 font-semibold text-zinc-500">
+                                    {index + 1}
+                                </div>
+                                <div className="col-span-5">
                                     <FormField
                                         control={form.control}
                                         name={`items.${index}.description`}
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormControl>
-                                                    <Input placeholder="Item description" {...field} />
+                                                    <Input 
+                                                        placeholder="Item description" 
+                                                        className={cn(
+                                                            duplicateIndices.has(index) && "border-destructive focus-visible:ring-destructive bg-destructive/5 text-destructive font-medium"
+                                                        )}
+                                                        {...field} 
+                                                    />
                                                 </FormControl>
+                                                {duplicateIndices.has(index) && (
+                                                    <p className="text-[11px] font-medium text-destructive mt-1">
+                                                        Duplicate description detected
+                                                    </p>
+                                                )}
                                                 <FormMessage />
                                             </FormItem>
                                         )}
@@ -299,6 +319,28 @@ export const InvoiceForm = ({ initialData, invoiceId }: InvoiceFormProps) => {
                                 </div>
                             </div>
                         ))}
+
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-y-2 pt-2 border-t border-zinc-100">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => append({ description: "", quantity: 1, unitPrice: 0 })}
+                            >
+                                <Plus className="mr-2 h-4 w-4" /> Add Item
+                            </Button>
+                            
+                            {(form.formState.errors.items as any)?.message && (
+                                <p className="text-sm font-semibold text-destructive">
+                                    {(form.formState.errors.items as any).message}
+                                </p>
+                            )}
+                            {(form.formState.errors.items as any)?.root?.message && (
+                                <p className="text-sm font-semibold text-destructive">
+                                    {(form.formState.errors.items as any).root.message}
+                                </p>
+                            )}
+                        </div>
                     </CardContent>
                 </Card>
 

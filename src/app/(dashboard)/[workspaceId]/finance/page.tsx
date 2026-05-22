@@ -23,6 +23,7 @@ import { formatCurrency } from "@/lib/currency";
 import { ExportCsvButton } from "@/components/finance/export-csv-button";
 import { DeleteInvoiceButton } from "@/components/finance/delete-invoice-button";
 import { ExpenseTable } from "@/components/finance/expense-table";
+// TypeScript Server Refresh Comment
 import { Role } from "@prisma/client";
 import { DeletePaymentButton } from "../../../../components/finance/delete-payment-button";
 import { serializeDecimal } from "@/lib/utils";
@@ -88,12 +89,12 @@ const FinancePage = async ({ params }: { params: Promise<{ workspaceId: string }
     const serializedExpenses = serializeDecimal(expenses);
 
     // Stats Calculations
-    const totalRevenue = payments.reduce((acc, p) => acc + Number(p.amount || 0), 0);
-    const totalExpenses = expenses.reduce((acc, e) => acc + Number(e.amount || 0), 0);
+    const totalRevenue = payments.reduce((acc: number, p: any) => acc + Number(p.amount || 0), 0);
+    const totalExpenses = expenses.reduce((acc: number, e: any) => acc + Number(e.amount || 0), 0);
     
-    const pendingInvoices = invoices.filter(inv => inv.status === "SENT" || inv.status === "OVERDUE");
-    const pendingAmount = pendingInvoices.reduce((acc, inv) => {
-        const paid = inv.payments.reduce((pAcc, p) => pAcc + Number(p.amount || 0), 0);
+    const pendingInvoices = invoices.filter((inv: any) => inv.status === "SENT" || inv.status === "OVERDUE");
+    const pendingAmount = pendingInvoices.reduce((acc: number, inv: any) => {
+        const paid = inv.payments.reduce((pAcc: number, p: any) => pAcc + Number(p.amount || 0), 0);
         const remaining = Number(inv.totalAmount || 0) - paid;
         return acc + Math.max(0, remaining);
     }, 0);
@@ -112,11 +113,11 @@ const FinancePage = async ({ params }: { params: Promise<{ workspaceId: string }
         const monthStart = startOfMonth(date);
         const nextMonth = startOfMonth(subMonths(date, -1));
 
-        const monthPayments = payments.filter(p => p.date >= monthStart && p.date < nextMonth);
-        const revenue = monthPayments.reduce((acc, p) => acc + Number(p.amount || 0), 0);
+        const monthPayments = payments.filter((p: any) => p.date >= monthStart && p.date < nextMonth);
+        const revenue = monthPayments.reduce((acc: number, p: any) => acc + Number(p.amount || 0), 0);
 
-        const monthExpenses = expenses.filter(e => e.date >= monthStart && e.date < nextMonth);
-        const expenseAmount = monthExpenses.reduce((acc, e) => acc + Number(e.amount || 0), 0);
+        const monthExpenses = expenses.filter((e: any) => e.date >= monthStart && e.date < nextMonth);
+        const expenseAmount = monthExpenses.reduce((acc: number, e: any) => acc + Number(e.amount || 0), 0);
 
         return { month: monthLabel, revenue, expenses: expenseAmount };
     });
@@ -208,6 +209,9 @@ const FinancePage = async ({ params }: { params: Promise<{ workspaceId: string }
                         currencySymbol={currencySymbol}
                         workspace={workspace}
                         userRole={userRole}
+                        projects={projects}
+                        teams={teams}
+                        members={members}
                     />
                 </TabsContent>
                 <TabsContent value="invoices" className="space-y-4">

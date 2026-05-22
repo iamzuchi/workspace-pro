@@ -17,6 +17,13 @@ export const CreateInvoiceSchema = z.object({
     items: z.array(InvoiceItemSchema).min(1, "At least one item is required"),
     taxRate: z.coerce.number().min(0).max(100).optional().default(0),
     currency: z.string().default("USD"),
+}).refine((data) => {
+    const descriptions = data.items.map(item => item.description.trim().toLowerCase()).filter(Boolean);
+    const uniqueDescriptions = new Set(descriptions);
+    return uniqueDescriptions.size === descriptions.length;
+}, {
+    message: "Duplicate item descriptions are not allowed",
+    path: ["items"],
 });
 
 export const RecordPaymentSchema = z.object({
