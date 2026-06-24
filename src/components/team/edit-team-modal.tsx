@@ -58,7 +58,8 @@ export const EditTeamModal = ({
         defaultValues: {
             name: team.name,
             description: team.description || "",
-            members: team.members.map(m => ({
+            members: team.members.map((m: any) => ({
+                id: m.id,
                 name: m.name,
                 contact: m.contact || "",
                 occupation: m.occupation || "",
@@ -72,7 +73,8 @@ export const EditTeamModal = ({
             form.reset({
                 name: team.name,
                 description: team.description || "",
-                members: team.members.map(m => ({
+                members: team.members.map((m: any) => ({
+                    id: m.id,
                     name: m.name,
                     contact: m.contact || "",
                     occupation: m.occupation || "",

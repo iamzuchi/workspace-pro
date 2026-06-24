@@ -48,5 +48,10 @@ export const PERMISSIONS = {
         UPDATE: [Role.ADMIN],
         DELETE: [Role.ADMIN],
         MANAGE_MEMBERS: [Role.ADMIN],
+    },
+    TEAMS: {
+        CREATE: [Role.ADMIN, Role.PROJECT_MANAGER],
+        UPDATE: [Role.ADMIN, Role.PROJECT_MANAGER],
+        DELETE: [Role.ADMIN],
     }
 } as const;

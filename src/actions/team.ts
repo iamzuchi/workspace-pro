@@ -16,7 +16,7 @@ export const createTeam = async (
     const user = await currentUser();
     if (!user?.id) return { error: "Unauthorized" };
 
-    const { isAllowed } = await checkPermissions(user.id, workspaceId, [...PERMISSIONS.WORKSPACE.UPDATE]); // Assuming workspace admin/manager can create teams
+    const { isAllowed } = await checkPermissions(user.id, workspaceId, [...PERMISSIONS.TEAMS.CREATE]); // Assuming workspace admin/manager can create teams
     if (!isAllowed) return { error: "Permission denied" };
 
     const validatedFields = CreateTeamSchema.safeParse(values);
@@ -68,7 +68,7 @@ export const updateTeam = async (
     const user = await currentUser();
     if (!user?.id) return { error: "Unauthorized" };
 
-    const { isAllowed } = await checkPermissions(user.id, workspaceId, [...PERMISSIONS.WORKSPACE.UPDATE]);
+    const { isAllowed } = await checkPermissions(user.id, workspaceId, [...PERMISSIONS.TEAMS.UPDATE]);
     if (!isAllowed) return { error: "Permission denied" };
 
     const validatedFields = CreateTeamSchema.safeParse(values);
@@ -77,7 +77,7 @@ export const updateTeam = async (
     const { name, description, projectId, members } = validatedFields.data;
 
     try {
-        await prisma.$transaction(async (tx) => {
+        await prisma.$transaction(async (tx: any) => {
             await tx.team.update({
                 where: { id: teamId, workspaceId },
                 data: {
@@ -87,18 +87,46 @@ export const updateTeam = async (
                     // but we can optionally handle the single projectId if provided in the schema
                 }
             });
-
-            // For simplicity, we replace all members. 
-            // In a more complex app, we'd diff them.
-            // @ts-ignore
-            await tx.teamMember.deleteMany({
+            // Diff members instead of replacing all to preserve task assignments
+            const currentMembers = await tx.teamMember.findMany({
                 where: { teamId }
             });
+            const currentMemberIds = currentMembers.map((m: any) => m.id);
 
-            if (members && members.length > 0) {
+            // 1. Identify members to delete
+            const incomingIds = members ? (members.map((m: any) => m.id).filter(Boolean) as string[]) : [];
+            const membersToDelete = currentMembers.filter((m: any) => !incomingIds.includes(m.id));
+
+            if (membersToDelete.length > 0) {
+                // @ts-ignore
+                await tx.teamMember.deleteMany({
+                    where: {
+                        id: { in: membersToDelete.map((m: any) => m.id) }
+                    }
+                });
+            }
+
+            // 2. Identify members to update
+            const membersToUpdate = members ? members.filter((m: any) => m.id && currentMemberIds.includes(m.id)) : [];
+            for (const member of membersToUpdate) {
+                // @ts-ignore
+                await tx.teamMember.update({
+                    where: { id: member.id },
+                    data: {
+                        name: member.name,
+                        contact: member.contact,
+                        occupation: member.occupation,
+                        address: member.address,
+                    }
+                });
+            }
+
+            // 3. Identify members to create
+            const membersToCreate = members ? members.filter((m: any) => !m.id || !currentMemberIds.includes(m.id)) : [];
+            if (membersToCreate.length > 0) {
                 // @ts-ignore
                 await tx.teamMember.createMany({
-                    data: members.map(member => ({
+                    data: membersToCreate.map((member: any) => ({
                         teamId,
                         name: member.name,
                         contact: member.contact,
@@ -123,7 +151,7 @@ export const deleteTeam = async (workspaceId: string, teamId: string) => {
     const user = await currentUser();
     if (!user?.id) return { error: "Unauthorized" };
 
-    const { isAllowed } = await checkPermissions(user.id, workspaceId, [...PERMISSIONS.WORKSPACE.UPDATE]);
+    const { isAllowed } = await checkPermissions(user.id, workspaceId, [...PERMISSIONS.TEAMS.DELETE]);
     if (!isAllowed) return { error: "Permission denied" };
 
     try {
