@@ -2,6 +2,7 @@
 
 // TypeScript Server Refresh Comment
 import prisma from "@/lib/db";
+import { serializeDecimal } from "@/lib/utils";
 import { currentUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { TaskStatus, TaskPriority } from "@prisma/client";
@@ -370,3 +371,60 @@ export const searchProjects = async (workspaceId: string, query: string) => {
         return [];
     }
 };
+
+export const searchExpenses = async (workspaceId: string, query: string) => {
+    const user = await currentUser();
+    if (!user) return [];
+
+    if (!query || query.length < 2) return [];
+
+    try {
+        const expenses = await prisma.expense.findMany({
+            where: {
+                workspaceId,
+                OR: [
+                    { title: { contains: query, mode: 'insensitive' } },
+                    { category: { contains: query, mode: 'insensitive' } }
+                ]
+            },
+            take: 10,
+            orderBy: {
+                date: 'desc'
+            }
+        });
+
+        return serializeDecimal(expenses);
+    } catch (error) {
+        console.error("Search expenses error:", error);
+        return [];
+    }
+};
+
+export const searchInvoices = async (workspaceId: string, query: string) => {
+    const user = await currentUser();
+    if (!user) return [];
+
+    if (!query || query.length < 2) return [];
+
+    try {
+        const invoices = await prisma.invoice.findMany({
+            where: {
+                workspaceId,
+                OR: [
+                    { number: { contains: query, mode: 'insensitive' } },
+                    { notes: { contains: query, mode: 'insensitive' } }
+                ]
+            },
+            take: 10,
+            orderBy: {
+                createdAt: 'desc'
+            }
+        });
+
+        return serializeDecimal(invoices);
+    } catch (error) {
+        console.error("Search invoices error:", error);
+        return [];
+    }
+};
+

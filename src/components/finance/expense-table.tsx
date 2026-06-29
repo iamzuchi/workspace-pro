@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format } from "date-fns";
+import { useSearchParams } from "next/navigation";
+import { cn } from "@/lib/utils";
 import { Search, Filter, MoreVertical, Edit, Trash, Download } from "lucide-react";
 import { 
     Table, 
@@ -70,6 +72,18 @@ export const ExpenseTable = ({
     const [searchTerm, setSearchTerm] = useState("");
     const [categoryFilter, setCategoryFilter] = useState("all");
     const [editingExpense, setEditingExpense] = useState<any | null>(null);
+
+    const searchParams = useSearchParams();
+    const expenseId = searchParams.get("expenseId");
+
+    useEffect(() => {
+        if (expenseId && expenses.length > 0) {
+            const target = expenses.find(e => e.id === expenseId);
+            if (target) {
+                setEditingExpense(target);
+            }
+        }
+    }, [expenseId, expenses]);
 
     const categories = Array.from(new Set(expenses.map(e => e.category)));
 
@@ -147,7 +161,12 @@ export const ExpenseTable = ({
                             </TableRow>
                         )}
                         {filteredExpenses.map((expense) => (
-                            <TableRow key={expense.id}>
+                            <TableRow 
+                                key={expense.id}
+                                className={cn(
+                                    expense.id === expenseId && "bg-emerald-50/50 border-emerald-300 ring-2 ring-emerald-500/20 transition-all duration-500"
+                                )}
+                            >
                                 <TableCell>{format(new Date(expense.date), "MMM d, yyyy")}</TableCell>
                                 <TableCell className="font-medium">{expense.title}</TableCell>
                                 <TableCell>

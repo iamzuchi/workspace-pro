@@ -8,9 +8,10 @@ import { useEffect, useState } from "react";
 
 interface MobileSidebarProps {
     workspaces: { id: string; name: string }[];
+    isAdmin?: boolean;
 }
 
-export const MobileSidebar = ({ workspaces }: MobileSidebarProps) => {
+export const MobileSidebar = ({ workspaces, isAdmin }: MobileSidebarProps) => {
     const [isMounted, setIsMounted] = useState(false);
 
     useEffect(() => {
@@ -28,7 +29,7 @@ export const MobileSidebar = ({ workspaces }: MobileSidebarProps) => {
             </SheetTrigger>
             <SheetContent side="left" className="p-0 bg-gray-900 text-white">
                 <SheetTitle className="sr-only">Mobile Menu</SheetTitle>
-                <Sidebar workspaces={workspaces} />
+                <Sidebar workspaces={workspaces} isAdmin={isAdmin} />
             </SheetContent>
         </Sheet>
     );

@@ -54,6 +54,7 @@ export const logActivity = async (
 
     await prisma.activity.create({
         data: {
+            workspaceId,
             projectId,
             invoiceId,
             userId: user.id,
@@ -77,4 +78,40 @@ export const getActivities = async (projectId: string) => {
         orderBy: { createdAt: "desc" },
         take: 20,
     });
+};
+
+export const getWorkspaceActivities = async (workspaceId: string) => {
+    const user = await currentUser();
+    if (!user || !user.id) return [];
+
+    try {
+        const activities = await prisma.activity.findMany({
+            where: { workspaceId },
+            include: {
+                user: {
+                    select: {
+                        name: true,
+                        image: true,
+                    }
+                },
+                project: {
+                    select: {
+                        name: true
+                    }
+                },
+                invoice: {
+                    select: {
+                        number: true
+                    }
+                }
+            },
+            orderBy: { createdAt: "desc" },
+            take: 100,
+        });
+
+        return activities;
+    } catch (error) {
+        console.error("Failed to get workspace activities:", error);
+        return [];
+    }
 };

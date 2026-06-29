@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useParams } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Settings, FileText, ShoppingCart, CreditCard, Users, Clock, Building2 } from "lucide-react";
+import { LayoutDashboard, Settings, FileText, ShoppingCart, CreditCard, Users, Clock, Building2, Activity } from "lucide-react";
 import Image from "next/image";
 
 import { WorkspaceSwitcher } from "@/components/dashboard/workspace-switcher";
@@ -11,9 +11,10 @@ import { WorkspaceSwitcher } from "@/components/dashboard/workspace-switcher";
 interface SidebarProps {
     workspaces: { id: string, name: string }[];
     currentWorkspace?: { id: string, name: string, logo: string | null } | null;
+    isAdmin?: boolean;
 }
 
-export const Sidebar = ({ workspaces, currentWorkspace }: SidebarProps) => {
+export const Sidebar = ({ workspaces, currentWorkspace, isAdmin }: SidebarProps) => {
     const pathname = usePathname();
     const params = useParams();
     const workspaceId = params.workspaceId as string;
@@ -68,6 +69,15 @@ export const Sidebar = ({ workspaces, currentWorkspace }: SidebarProps) => {
             href: `/${workspaceId}/settings`,
         },
     ];
+
+    if (isAdmin) {
+        routes.splice(routes.length - 1, 0, {
+            label: "Activity Log",
+            icon: Activity,
+            href: `/${workspaceId}/admin/activities`,
+            color: "text-rose-500",
+        });
+    }
 
     return (
         <div className="space-y-4 py-4 flex flex-col h-full bg-[#111827] text-white">

@@ -13,7 +13,7 @@ import {
     CommandList,
     CommandSeparator,
 } from "@/components/ui/command";
-import { searchTasks, searchProjects } from "@/actions/task";
+import { searchTasks, searchProjects, searchExpenses, searchInvoices } from "@/actions/task";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
@@ -24,7 +24,12 @@ interface GlobalTaskSearchProps {
 export const GlobalTaskSearch = ({ workspaceId }: GlobalTaskSearchProps) => {
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState("");
-    const [results, setResults] = useState<{ tasks: any[]; projects: any[] }>({ tasks: [], projects: [] });
+    const [results, setResults] = useState<{ 
+        tasks: any[]; 
+        projects: any[];
+        expenses: any[];
+        invoices: any[];
+    }>({ tasks: [], projects: [], expenses: [], invoices: [] });
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
 
@@ -41,20 +46,22 @@ export const GlobalTaskSearch = ({ workspaceId }: GlobalTaskSearchProps) => {
 
     const fetchResults = useCallback(async (searchQuery: string) => {
         if (searchQuery.length < 2) {
-            setResults({ tasks: [], projects: [] });
+            setResults({ tasks: [], projects: [], expenses: [], invoices: [] });
             return;
         }
 
         setIsLoading(true);
         try {
-            const [tasks, projects] = await Promise.all([
+            const [tasks, projects, expenses, invoices] = await Promise.all([
                 searchTasks(workspaceId, searchQuery),
-                searchProjects(workspaceId, searchQuery)
+                searchProjects(workspaceId, searchQuery),
+                searchExpenses(workspaceId, searchQuery),
+                searchInvoices(workspaceId, searchQuery),
             ]);
-            setResults({ tasks, projects });
+            setResults({ tasks, projects, expenses, invoices });
         } catch (error) {
             console.error("Failed to fetch search results", error);
-            setResults({ tasks: [], projects: [] });
+            setResults({ tasks: [], projects: [], expenses: [], invoices: [] });
         } finally {
             setIsLoading(false);
         }
@@ -78,6 +85,16 @@ export const GlobalTaskSearch = ({ workspaceId }: GlobalTaskSearchProps) => {
         router.push(`/${workspaceId}/projects/${projectId}`);
     };
 
+    const onSelectInvoice = (invoiceId: string) => {
+        setOpen(false);
+        router.push(`/${workspaceId}/invoices/${invoiceId}`);
+    };
+
+    const onSelectExpense = (expenseId: string) => {
+        setOpen(false);
+        router.push(`/${workspaceId}/finance?tab=expenses&expenseId=${expenseId}`);
+    };
+
     return (
         <>
             <div 
@@ -86,7 +103,7 @@ export const GlobalTaskSearch = ({ workspaceId }: GlobalTaskSearchProps) => {
             >
                 <Search className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
                 <p className="font-semibold text-sm text-muted-foreground group-hover:text-foreground transition">
-                    Search projects and tasks...
+                    Search projects, tasks, invoices...
                 </p>
                 <kbd className="ml-auto pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
                     <span className="text-xs">⌘</span>K
@@ -95,7 +112,7 @@ export const GlobalTaskSearch = ({ workspaceId }: GlobalTaskSearchProps) => {
 
             <CommandDialog open={open} onOpenChange={setOpen} shouldFilter={false}>
                 <CommandInput 
-                    placeholder="Type project or task title..." 
+                    placeholder="Type to search projects, tasks, invoices, expenses..." 
                     value={query}
                     onValueChange={setQuery}
                 />
@@ -159,6 +176,62 @@ export const GlobalTaskSearch = ({ workspaceId }: GlobalTaskSearchProps) => {
                                             </Badge>
                                             <span className="truncate max-w-[300px]">
                                                 {task.description || "No description"}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </CommandItem>
+                            ))}
+                        </CommandGroup>
+                    )}
+
+                    {!isLoading && results.invoices.length > 0 && (
+                        <CommandGroup heading="Invoices">
+                            {results.invoices.map((invoice) => (
+                                <CommandItem 
+                                    key={invoice.id}
+                                    onSelect={() => onSelectInvoice(invoice.id)}
+                                    className="cursor-pointer"
+                                >
+                                    <div className="flex flex-col gap-y-1 w-full">
+                                        <div className="flex items-center justify-between">
+                                            <span className="font-medium">#{invoice.number}</span>
+                                            <Badge variant="outline" className="text-[10px] uppercase">
+                                                {invoice.status}
+                                            </Badge>
+                                        </div>
+                                        {invoice.notes && (
+                                            <span className="text-xs text-muted-foreground truncate max-w-[400px]">
+                                                {invoice.notes}
+                                            </span>
+                                        )}
+                                    </div>
+                                </CommandItem>
+                            ))}
+                        </CommandGroup>
+                    )}
+
+                    {!isLoading && results.expenses.length > 0 && (
+                        <CommandGroup heading="Expenses">
+                            {results.expenses.map((expense) => (
+                                <CommandItem 
+                                    key={expense.id}
+                                    onSelect={() => onSelectExpense(expense.id)}
+                                    className="cursor-pointer"
+                                >
+                                    <div className="flex flex-col gap-y-1 w-full">
+                                        <div className="flex items-center justify-between">
+                                            <span className="font-medium">{expense.title}</span>
+                                            <Badge variant="secondary" className="text-[10px] uppercase">
+                                                {expense.category}
+                                            </Badge>
+                                        </div>
+                                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                                            <span>Amount: {Number(expense.amount).toFixed(2)}</span>
+                                            <span className={cn(
+                                                "text-[10px] font-semibold uppercase",
+                                                expense.status === "PAID" ? "text-emerald-500" : "text-amber-500"
+                                            )}>
+                                                {expense.status || "PAID"}
                                             </span>
                                         </div>
                                     </div>

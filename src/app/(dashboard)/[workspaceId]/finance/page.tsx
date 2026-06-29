@@ -28,8 +28,15 @@ import { Role } from "@prisma/client";
 import { DeletePaymentButton } from "../../../../components/finance/delete-payment-button";
 import { serializeDecimal } from "@/lib/utils";
 
-const FinancePage = async ({ params }: { params: Promise<{ workspaceId: string }> }) => {
+const FinancePage = async ({ 
+    params,
+    searchParams 
+}: { 
+    params: Promise<{ workspaceId: string }>;
+    searchParams: Promise<{ tab?: string; expenseId?: string }>
+}) => {
     const { workspaceId } = await params;
+    const { tab } = await searchParams;
     const user = await currentUser();
     if (!user) redirect("/login");
 
@@ -184,7 +191,7 @@ const FinancePage = async ({ params }: { params: Promise<{ workspaceId: string }
                 </Card>
             </div>
 
-            <Tabs defaultValue="overview" className="space-y-4">
+            <Tabs defaultValue={tab || "overview"} className="space-y-4">
                 <TabsList>
                     <TabsTrigger value="overview">Overview</TabsTrigger>
                     <TabsTrigger value="expenses">Expenses</TabsTrigger>

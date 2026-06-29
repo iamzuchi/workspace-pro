@@ -80,6 +80,7 @@ model Workspace {
   members     WorkspaceMember[]
   workSites   WorkSite[]
   inventoryRecords InventoryRecord[]
+  activities       Activity[]
 }
 
 model WorkspaceInvite {
@@ -366,16 +367,20 @@ model Comment {
 }
 
 model Activity {
-  id        String   @id @default(cuid())
-  projectId String?
-  invoiceId String?
-  userId    String
-  action    String
-  details   String?
-  createdAt DateTime @default(now())
-  invoice   Invoice? @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  project   Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id          String     @id @default(cuid())
+  workspaceId String?
+  projectId   String?
+  invoiceId   String?
+  userId      String
+  action      String
+  details     String?
+  createdAt   DateTime   @default(now())
+  invoice     Invoice?   @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  project     Project?   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
 }
 
 model PasswordResetToken {
